@@ -1,4 +1,4 @@
-package com.songdosamgyeop.order.data.ui.hq.registrationlist
+package com.songdosamgyeop.order.ui.hq.registrationlist
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel

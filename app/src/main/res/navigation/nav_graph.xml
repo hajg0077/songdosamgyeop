@@ -1,21 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/nav_graph">
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/branchRegistrationFragment">
 
+    <!-- 브랜치: 회원가입 신청 -->
     <fragment
         android:id="@+id/branchRegistrationFragment"
         android:name="com.songdosamgyeop.order.ui.branch.registration.BranchRegistrationFragment"
-        android:label="branchRegistration" />
+        android:label="지사 회원가입 신청" >
+        <action
+            android:id="@+id/action_branchRegistration_to_branchWaiting"
+            app:destination="@id/branchWaitingFragment" />
+    </fragment>
+
     <fragment
         android:id="@+id/branchWaitingFragment"
         android:name="com.songdosamgyeop.order.ui.branch.waiting.BranchWaitingFragment"
-        android:label="branchWaiting" />
+        android:label="승인 대기" />
 
+    <!-- HQ: 신청서 목록 -->
+    <fragment
+        android:id="@+id/hqRegistrationListFragment"
+        android:name="com.songdosamgyeop.order.ui.hq.registrationlist.HqRegistrationListFragment"
+        android:label="신청서 목록">
+        <action
+            android:id="@+id/action_hqRegistrationListFragment_to_hqRegistrationDetailFragment"
+            app:destination="@id/hqRegistrationDetailFragment" />
+    </fragment>
+
+    <!-- HQ: 신청서 상세 -->
     <fragment
         android:id="@+id/hqRegistrationDetailFragment"
         android:name="com.songdosamgyeop.order.ui.hq.registrationdetail.HqRegistrationDetailFragment"
-        android:label="hqDetail">
+        android:label="신청서 상세">
         <argument android:name="id" app:argType="string" />
         <argument android:name="email" app:argType="string" />
         <argument android:name="name" app:argType="string" />
@@ -24,4 +42,5 @@
         <argument android:name="phone" app:argType="string" />
         <argument android:name="memo" app:argType="string" />
     </fragment>
+
 </navigation>

@@ -1,5 +1,6 @@
-package com.songdosamgyeop.order.data.ui.branch.registration
+package com.songdosamgyeop.order.ui.branch.registration
 
+import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -35,7 +36,7 @@ class BranchRegistrationViewModel @Inject constructor(
         val bn = branchName.value?.trim().orEmpty()
         val bc = branchCode.value?.trim().orEmpty()
 
-        val emailOk = e.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(e).matches()
+        val emailOk = e.isNotBlank() && Patterns.EMAIL_ADDRESS.matcher(e).matches()
         return emailOk && n.isNotBlank() && bn.isNotBlank() && bc.isNotBlank()
     }
 

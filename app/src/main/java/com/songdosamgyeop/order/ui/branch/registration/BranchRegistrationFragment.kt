@@ -1,8 +1,6 @@
-package com.songdosamgyeop.order.data.ui.branch.registration
+package com.songdosamgyeop.order.ui.branch.registration
 
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.View
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment

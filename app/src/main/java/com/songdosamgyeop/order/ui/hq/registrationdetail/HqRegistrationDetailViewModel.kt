@@ -1,4 +1,4 @@
-package com.songdosamgyeop.order.data.ui.hq.registrationdetail
+package com.songdosamgyeop.order.ui.hq.registrationdetail
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

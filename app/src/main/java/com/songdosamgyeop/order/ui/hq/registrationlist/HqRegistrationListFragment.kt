@@ -1,8 +1,7 @@
-package com.songdosamgyeop.order.data.ui.hq.registrationlist
+package com.songdosamgyeop.order.ui.hq.registrationlist
 
 import android.R
 import android.graphics.Canvas
-import android.graphics.Paint
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.View
@@ -17,7 +16,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.songdosamgyeop.order.databinding.FragmentHqRegistrationListBinding
-import com.songdosamgyeop.order.ui.hq.registrationlist.HqRegistrationActionsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
