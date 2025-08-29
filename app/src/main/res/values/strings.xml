@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">송도삼겹</string>
+
+    <string name="label_email">이메일</string>
+    <string name="label_name">담당자 이름</string>
+    <string name="label_branch_name">지점명</string>
+    <string name="label_branch_code">지점 코드</string>
+    <string name="label_phone">전화번호</string>
+    <string name="label_memo">메모 (선택)</string>
+
+    <string name="action_submit">신청서 제출</string>
+
+    <string name="msg_waiting_approval">승인 대기 중입니다. 본사 승인 후 로그인 가능합니다.</string>
+    <string name="msg_submit_ok">신청서가 제출되었습니다. 승인 대기 화면으로 이동합니다.</string>
+    <string name="msg_submit_fail">제출에 실패했습니다. 잠시 후 다시 시도하세요.</string>
+</resources>

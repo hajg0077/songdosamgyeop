@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "366313858566",
+    "project_id": "songdosamgyeop",
+    "storage_bucket": "songdosamgyeop.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:366313858566:android:5c14736997e427c60c8587",
+        "android_client_info": {
+          "package_name": "com.songdosamgyeop.order"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSd-Z1-fCcy5xHkxCwyfU92EI_vnR8jvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

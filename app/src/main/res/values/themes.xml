@@ -1,0 +1,29 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- 앱 전체 테마: M3, NoActionBar -->
+    <style name="Theme.SongdoSamgyeop" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- 기본 색상: 다이내믹 컬러(안드12+) 우선, 미지원 기기는 아래 colors.xml로 Fallback -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- 컴포넌트 라운드/엘리베이션 -->
+        <item name="shapeAppearanceSmallComponent">@style/Shape.Small</item>
+        <item name="shapeAppearanceMediumComponent">@style/Shape.Medium</item>
+        <item name="shapeAppearanceLargeComponent">@style/Shape.Large</item>
+
+        <!-- 텍스트필드 라벨 애니메이션/스타일은 M3 기본 사용 -->
+    </style>
+
+    <!-- 둥글기(2xl 느낌) -->
+    <style name="Shape.Small">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">12dp</item>
+    </style>
+    <style name="Shape.Medium">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+    <style name="Shape.Large">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
+</resources>
