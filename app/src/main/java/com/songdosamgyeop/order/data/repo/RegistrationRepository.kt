@@ -1,41 +1,61 @@
 package com.songdosamgyeop.order.data.repo
 
-import com.songdosamgyeop.order.data.model.Registration
+import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.tasks.await
-import timber.log.Timber
+import kotlinx.coroutines.flow.callbackFlow
 import javax.inject.Inject
-import javax.inject.Singleton
-interface RegistrationRepository {
-    /**
-     * 읽기 권한 없이 중복 방지:
-     * - 문서 ID = 소문자 이메일(공백 제거)
-     * - create() 사용 → 이미 존재하면 예외 발생 (업데이트 권한 없어도 안전)
-     */
-    suspend fun submit(reg: Registration): Result<Unit>
-    fun listenPendingRegistrations(): Flow<List<Pair<String, Registration>>>
-}
 
-@Singleton
-class RegistrationRepositoryImpl @Inject constructor(
+/**
+ * 신청서(registrations) 읽기 전용 레포지토리.
+ * - 단일 문서 구독으로 상세 화면에 실시간 반영.
+ */
+class RegistrationRepository @Inject constructor(
     private val db: FirebaseFirestore
-) : RegistrationRepository {
-
-    private val col get() = db.collection("registrations")
-
-    override suspend fun submit(reg: Registration): Result<Unit> = runCatching {
-        val emailId = reg.email.trim().lowercase()
-        require(emailId.isNotBlank()) { "이메일을 입력하세요." }
-        val docRef = col.document(emailId)
-
-        // create() → 문서가 이미 있으면 실패(중복 방지), 보안 규칙 create만으로 충분
-        docRef.create(reg.copy(email = emailId)).await()
-
-        Timber.d("Registration created: $emailId")
-    }
-
-    override fun listenPendingRegistrations(): Flow<List<Pair<String, Registration>>> {
-        TODO("Not yet implemented")
+) {
+    /**
+     * 주어진 docId의 신청서를 실시간으로 구독한다.
+     * @param docId Firestore registrations 문서 ID
+     * @return Flow<Registration?> 문서가 없으면 null
+     */
+    fun observeRegistration(docId: String): Flow<Registration?> = callbackFlow {
+        Log.d("RegRepo", "observeRegistration start docId=$docId")
+        val ref = db.collection("registrations").document(docId)
+        val reg: ListenerRegistration = ref.addSnapshotListener { snap, e ->
+            if (e != null) {
+                Log.e("RegRepo", "snapshot error", e)
+                trySend(null); return@addSnapshotListener
+            }
+            val data = snap?.data
+            if (snap != null && data != null) {
+                trySend(
+                    Registration(
+                        id = snap.id,
+                        email = data["email"] as? String ?: "",
+                        name = data["name"] as? String ?: "",
+                        branchName = data["branchName"] as? String ?: "",
+                        branchCode = data["branchCode"] as? String,
+                        phone = data["phone"] as? String,
+                        memo = data["memo"] as? String
+                    )
+                )
+            } else {
+                trySend(null)
+            }
+        }
+        awaitClose { Log.d("RegRepo", "observeRegistration stop"); reg.remove() }
     }
 }
+
+/** 신청서 도메인 모델 (상세에서 필요한 필드만) */
+data class Registration(
+    val id: String,
+    val email: String,
+    val name: String,
+    val branchName: String,
+    val branchCode: String?,
+    val phone: String?,
+    val memo: String?
+)

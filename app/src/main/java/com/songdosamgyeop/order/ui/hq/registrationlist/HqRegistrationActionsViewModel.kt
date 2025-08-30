@@ -26,7 +26,11 @@ class HqRegistrationActionsViewModel @Inject constructor(
         call("hqRejectRegistration", mapOf("docId" to docId, "reason" to (reason ?: "")))
 
     private fun call(fn: String, data: Map<String, Any?>) {
-        if (_busy.value == true) return
+        if (!com.songdosamgyeop.order.Env.FUNCTIONS_ENABLED) {
+            _message.value = Result.failure(IllegalStateException("서버 기능(Functions) 미연결"))
+            return
+        }
+        // (나중에 Functions 연결하면 아래 실제 호출 로직 활성화)
         _busy.value = true
         viewModelScope.launch {
             runCatching {

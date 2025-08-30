@@ -1,6 +1,6 @@
 package com.songdosamgyeop.order.ui.hq.registrationlist
 
-import android.R
+import com.songdosamgyeop.order.R
 import android.graphics.Canvas
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
