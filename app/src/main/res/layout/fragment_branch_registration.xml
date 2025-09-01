@@ -1,159 +1,160 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/root"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- 스크롤 가능한 입력 폼 -->
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scroll"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottomBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- 이메일 -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:endIconMode="clear_text">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="이메일"
+                    android:inputType="textEmailAddress"
+                    android:autoLink="email"
+                    tools:text="branch@example.com"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="12dp"/>
+
+            <!-- 신청자 이름 -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:endIconMode="clear_text">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="신청자 이름"
+                    android:inputType="textPersonName"
+                    tools:text="홍길동"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="12dp"/>
+
+            <!-- 지사명 -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:endIconMode="clear_text">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etBranchName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="지사명"
+                    android:inputType="textCapWords"
+                    tools:text="송도삼겹 인천송도점"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="12dp"/>
+
+            <!-- 지사 코드(선택) -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:endIconMode="clear_text">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etBranchCode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="지사 코드 (선택)"
+                    android:inputType="text"
+                    tools:text="BR-00123"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="12dp"/>
+
+            <!-- 연락처(선택) -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:endIconMode="clear_text">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPhone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="연락처 (선택)"
+                    android:inputType="phone"
+                    tools:text="010-1234-5678"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="12dp"/>
+
+            <!-- 메모(선택) -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMemo"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:gravity="top"
+                    android:hint="메모 (선택)"
+                    android:inputType="textMultiLine"
+                    tools:text="오픈 예정일 10월, 발주 빈도 월 2회 예상"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- 하단 제출/로딩 영역 -->
+    <LinearLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/progress"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="20dp">
+            android:visibility="gone"/>
 
-            <!-- 이메일 -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilEmail"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:hint="@string/label_email"
-                app:boxBackgroundMode="outlined"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/inputEmail"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="textEmailAddress"/>
-            </com.google.android.material.textfield.TextInputLayout>
+        <View
+            android:layout_width="12dp"
+            android:layout_height="0dp"/>
 
-            <!-- 담당자 이름 -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilName"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:hint="@string/label_name"
-                app:boxBackgroundMode="outlined"
-                app:layout_constraintTop_toBottomOf="@id/tilEmail"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_goneMarginTop="12dp"
-                android:layout_marginTop="12dp">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/inputName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSubmit"
+            style="@style/Widget.Material3.Button.FilledButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="신청서 제출"/>
+    </LinearLayout>
 
-            <!-- 지점명 -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilBranchName"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:hint="@string/label_branch_name"
-                app:boxBackgroundMode="outlined"
-                app:layout_constraintTop_toBottomOf="@id/tilName"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="12dp">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/inputBranchName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- 지점 코드 -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilBranchCode"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:hint="@string/label_branch_code"
-                app:boxBackgroundMode="outlined"
-                app:layout_constraintTop_toBottomOf="@id/tilBranchName"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="12dp">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/inputBranchCode"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- 전화번호 -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilPhone"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:hint="@string/label_phone"
-                app:boxBackgroundMode="outlined"
-                app:layout_constraintTop_toBottomOf="@id/tilBranchCode"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="12dp">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/inputPhone"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="phone"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- 메모 -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilMemo"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:hint="@string/label_memo"
-                app:boxBackgroundMode="outlined"
-                app:layout_constraintTop_toBottomOf="@id/tilPhone"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="12dp">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/inputMemo"
-                    android:layout_width="match_parent"
-                    android:layout_height="120dp"
-                    android:gravity="top|start"
-                    android:inputType="textMultiLine"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- 제출 버튼 -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnSubmit"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@string/action_submit"
-                android:enabled="false"
-                app:layout_constraintTop_toBottomOf="@id/tilMemo"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="20dp"/>
-
-            <!-- 로딩 -->
-            <ProgressBar
-                android:id="@+id/progress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                app:layout_constraintTop_toBottomOf="@id/btnSubmit"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="12dp"/>
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

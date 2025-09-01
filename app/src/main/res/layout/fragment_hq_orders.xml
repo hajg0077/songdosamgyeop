@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <!-- 필터 바 -->
+    <LinearLayout
+        android:id="@+id/filterBar"
+        android:layout_width="0dp" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="12dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- 상태 칩 -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupStatus"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            app:singleSelection="true">
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipPlaced"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:checked="true" android:text="PLACED"/>
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipDraft"
+                style="@style/Widget.Material3.Chip.Assist"
+                android:text="DRAFT"/>
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- 지사 필터 -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputBranch"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="지사명 검색">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etBranchName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                tools:text="송도"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- 기간 -->
+        <LinearLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:paddingTop="8dp">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPickDate"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:text="기간 선택(최근 7일)"/>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClearDate"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:text="지우기" android:layout_marginStart="8dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 리스트 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler"
+        android:layout_width="0dp" android:layout_height="0dp"
+        android:padding="12dp" android:clipToPadding="false"
+        app:layout_constraintTop_toBottomOf="@+id/filterBar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:listitem="@layout/item_hq_order"
+        tools:itemCount="5"/>
+
+    <!-- 빈/로딩 표시(간단) -->
+    <TextView
+        android:id="@+id/tvEmpty"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="표시할 주문이 없습니다."
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@id/recycler"
+        app:layout_constraintBottom_toBottomOf="@id/recycler"
+        app:layout_constraintStart_toStartOf="@id/recycler"
+        app:layout_constraintEnd_toEndOf="@id/recycler"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

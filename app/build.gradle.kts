@@ -27,14 +27,21 @@ android {
     }
 
     buildTypes {
+        debug {
+            // ✅ CSV 내보내기 사용 (툴바 '내보내기' 기능 ON)
+            buildConfigField("boolean", "FEATURE_EXPORT", "true")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // 필요 시 운영에서 켜도 됨
+            buildConfigField("boolean", "FEATURE_EXPORT", "false")
         }
     }
+
     buildFeatures {
         viewBinding = true
         buildConfig = true

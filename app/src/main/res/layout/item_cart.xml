@@ -1,0 +1,31 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="1" android:orientation="vertical">
+        <TextView android:id="@+id/tvName"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textStyle="bold" tools:text="삼겹살 500g"/>
+        <TextView android:id="@+id/tvPrice"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            tools:text="12,000원 x 2 = 24,000원"/>
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnDec"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:text="-"/>
+    <TextView
+        android:id="@+id/tvQty"
+        android:layout_width="40dp" android:layout_height="wrap_content"
+        android:gravity="center" tools:text="2"/>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnInc"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:text="+"/>
+</LinearLayout>

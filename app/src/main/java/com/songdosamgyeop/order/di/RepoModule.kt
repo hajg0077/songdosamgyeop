@@ -3,6 +3,7 @@ package com.songdosamgyeop.order.di
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.songdosamgyeop.order.data.repo.AuthRepository
+import com.songdosamgyeop.order.data.repo.BranchRegistrationRepository
 import com.songdosamgyeop.order.data.repo.RegistrationRepository
 import com.songdosamgyeop.order.data.repo.RegistrationRepositoryImpl
 import dagger.Binds
@@ -32,3 +33,8 @@ object RepoModule {
         firestore: FirebaseFirestore
     ): AuthRepository = AuthRepository(auth, firestore)
 }
+
+@Provides @Singleton
+fun provideBranchRegistrationRepository(
+    firestore: FirebaseFirestore
+): BranchRegistrationRepository = BranchRegistrationRepository(firestore)

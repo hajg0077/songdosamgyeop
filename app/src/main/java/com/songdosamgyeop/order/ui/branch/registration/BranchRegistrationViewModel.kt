@@ -1,71 +1,47 @@
 package com.songdosamgyeop.order.ui.branch.registration
 
-import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.songdosamgyeop.order.data.model.Registration
-import com.songdosamgyeop.order.data.repo.RegistrationRepository
+import com.songdosamgyeop.order.data.repo.BranchRegistrationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
+/**
+ * 지사 회원가입 신청 ViewModel.
+ * - Repository를 호출하여 신청서를 저장한다.
+ */
 @HiltViewModel
 class BranchRegistrationViewModel @Inject constructor(
-    private val repo: RegistrationRepository
+    private val repo: BranchRegistrationRepository
 ) : ViewModel() {
 
-    val email = MutableLiveData("")
-    val name = MutableLiveData("")
-    val branchName = MutableLiveData("")
-    val branchCode = MutableLiveData("")
-    val phone = MutableLiveData("")
-    val memo = MutableLiveData("")
+    private val _loading = MutableLiveData(false)
+    /** 저장 중 로딩 상태 */
+    val loading: LiveData<Boolean> = _loading
 
-    private val _submitting = MutableLiveData(false)
-    val submitting: LiveData<Boolean> = _submitting
+    private val _submitResult = MutableLiveData<Result<String>>()
+    /** 저장 결과 (성공: docId, 실패: 에러) */
+    val submitResult: LiveData<Result<String>> = _submitResult
 
-    private val _result = MutableLiveData<Result<Unit>>()
-    val result: LiveData<Result<Unit>> = _result
-
-    fun isFormValid(): Boolean {
-        val e = email.value?.trim().orEmpty()
-        val n = name.value?.trim().orEmpty()
-        val bn = branchName.value?.trim().orEmpty()
-        val bc = branchCode.value?.trim().orEmpty()
-
-        val emailOk = e.isNotBlank() && Patterns.EMAIL_ADDRESS.matcher(e).matches()
-        return emailOk && n.isNotBlank() && bn.isNotBlank() && bc.isNotBlank()
-    }
-
-    fun submit() {
-        if (!isFormValid()) {
-            _result.value = Result.failure(IllegalArgumentException("필수 항목을 확인하세요."))
-            return
-        }
-        val reg = Registration(
-            email = email.value!!.trim(),
-            name = name.value!!.trim(),
-            branchName = branchName.value!!.trim(),
-            branchCode = branchCode.value!!.trim(),
-            phone = phone.value?.trim().orEmpty(),
-            memo = memo.value?.trim().orEmpty()
-        )
-
-        _submitting.value = true
+    /**
+     * 회원가입 신청서를 저장한다.
+     */
+    fun submit(
+        email: String,
+        name: String,
+        branchName: String,
+        branchCode: String?,
+        phone: String?,
+        memo: String?
+    ) {
+        _loading.value = true
         viewModelScope.launch {
-            repo.submit(reg)
-                .onSuccess {
-                    Timber.d("신청서 제출 성공")
-                    _result.value = Result.success(Unit)
-                }
-                .onFailure { t ->
-                    Timber.e(t, "신청서 제출 실패")
-                    _result.value = Result.failure(t)
-                }
-            _submitting.value = false
+            val res = repo.submitRegistration(email, name, branchName, branchCode, phone, memo)
+            _submitResult.value = res
+            _loading.value = false
         }
     }
 }

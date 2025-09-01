@@ -80,4 +80,35 @@
         android:label="신청서 상세">
         <argument android:name="id" app:argType="string" />
     </fragment>
+
+    <fragment
+        android:id="@+id/productsFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.products.ProductsFragment"
+        android:label="상품 목록">
+        <action
+            android:id="@+id/action_products_to_cart"
+            app:destination="@id/cartFragment"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/cartFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.cart.CartFragment"
+        android:label="장바구니"/>
+
+    <fragment
+        android:id="@+id/hqOrdersFragment"
+        android:name="com.songdosamgyeop.order.ui.hq.orders.HqOrdersFragment"
+        android:label="주문 모니터링">
+        <action
+            android:id="@+id/action_hqOrders_to_hqOrderDetail"
+            app:destination="@id/hqOrderDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/hqOrderDetailFragment"
+        android:name="com.songdosamgyeop.order.ui.hq.orders.detail.HqOrderDetailFragment"
+        android:label="주문 상세">
+        <argument android:name="orderId" app:argType="string" />
+    </fragment>
+
 </navigation>

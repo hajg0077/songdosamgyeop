@@ -2,10 +2,10 @@ package com.songdosamgyeop.order.ui.hq.registrationlist
 
 import com.songdosamgyeop.order.R
 import android.graphics.Canvas
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -15,8 +15,11 @@ import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
+import com.songdosamgyeop.order.core.model.RegistrationStatus
 import com.songdosamgyeop.order.databinding.FragmentHqRegistrationListBinding
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.core.graphics.drawable.toDrawable
+import com.songdosamgyeop.order.ui.common.SpacingItemDecoration
 
 @AndroidEntryPoint
 class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_list) {
@@ -93,12 +96,10 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
 
                 if (dX > 0) {
                     // Approve: 초록 배경 + 체크
-                    val bg = ColorDrawable(
-                        MaterialColors.getColor(
-                            item,
-                            com.google.android.material.R.attr.colorPrimary
-                        )
-                    )
+                    val bg = MaterialColors.getColor(
+                        item,
+                        com.google.android.material.R.attr.colorPrimary
+                    ).toDrawable()
                     bg.setBounds(item.left, item.top, item.left + dX.toInt(), item.bottom)
                     bg.draw(c)
                     val icon = ContextCompat.getDrawable(ctx, R.drawable.ic_check_24)
@@ -112,7 +113,9 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                     }
                 } else if (dX < 0) {
                     // Reject: 빨강 배경 + X
-                    val bg = ColorDrawable(MaterialColors.getColor(item, com.google.android.material.R.attr.colorError))
+                    val bg =
+                        MaterialColors.getColor(item, com.google.android.material.R.attr.colorError)
+                            .toDrawable()
                     bg.setBounds(item.right + dX.toInt(), item.top, item.right, item.bottom)
                     bg.draw(c)
                     val icon = ContextCompat.getDrawable(ctx, R.drawable.ic_close_24)
@@ -139,6 +142,26 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                 Snackbar.make(b.root, it.message ?: "처리에 실패했습니다.", Snackbar.LENGTH_LONG).show()
             }
         }
+
+
+        // ✅ 목록 구독: VM.list 로 변경
+        vm.list.observe(viewLifecycleOwner) { list ->
+            adapter.submitList(list)
+            b.tvEmpty.visibility = if (list.isNullOrEmpty()) View.VISIBLE else View.GONE
+        }
+
+        // ✅ 검색창 연결
+        b.etSearch.doOnTextChanged { text, _, _, _ ->
+            vm.setQuery(text?.toString().orEmpty())
+        }
+
+        // ✅ 상태 칩 연결
+        b.chipPending.setOnClickListener { vm.setStatus(RegistrationStatus.PENDING) }
+        b.chipApproved.setOnClickListener { vm.setStatus(RegistrationStatus.APPROVED) }
+        b.chipRejected.setOnClickListener { vm.setStatus(RegistrationStatus.REJECTED) }
+        b.recycler.addItemDecoration(
+            SpacingItemDecoration(resources.getDimensionPixelSize(R.dimen.list_item_space))
+        )
     }
 
     private fun removeFromList(docId: String) {
@@ -146,7 +169,8 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         adapter.submitList(newList)
     }
 
-    private fun showUndoSnackbar(b: FragmentHqRegistrationListBinding, msg: String) {
+    private fun showUndoSnackbar(b: FragmentHqRegistrationListBinding, msg: String) {nvm - v
+
         Snackbar.make(b.root, msg, Snackbar.LENGTH_LONG)
             .setAction("되돌리기") {
                 val a = lastAction ?: return@setAction
