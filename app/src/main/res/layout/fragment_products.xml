@@ -1,15 +1,142 @@
-<!-- res/layout/fragment_products.xml -->
-<androidx.constraintlayout.widget.ConstraintLayout
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler"
-        android:layout_width="0dp" android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:padding="12dp"/>
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- 상단 툴바(선택, 타이틀만) -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:title="상품 주문"/>
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:orientation="vertical">
+
+        <!-- 브랜드 탭 (칩 4개) -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupBrand"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp"
+            app:singleSelection="true"
+            app:selectionRequired="true"
+            app:chipSpacingHorizontal="6dp">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipBrandSongdo"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:text="송도삼겹"
+                android:checked="true"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipBrandBulbaek"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:text="불백기사식당"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipBrandHong"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:text="홍선생 직화족발"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipBrandCommon"
+                style="@style/Widget.Material3.Chip.Filter"
+                android:text="공용"/>
+        </com.google.android.material.chip.ChipGroup>
+
+        <!-- 카테고리 칩 (동적 생성) -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupCategory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            app:singleSelection="true"
+            app:chipSpacingHorizontal="6dp"/>
+
+        <!-- 검색 -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/inputSearch"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginTop="4dp"
+            android:hint="상품 검색">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSearch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                tools:text="삼겹"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- 리스트 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="12dp"
+            android:clipToPadding="false"
+            tools:listitem="@layout/item_product"
+            tools:itemCount="6"/>
+
+        <!-- 하단 미니바: 합계/품목수/확정 -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cartBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_weight="1">
+
+                    <TextView
+                        android:id="@+id/tvCartSummary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textStyle="bold"
+                        tools:text="총 5개 · 34,000원"/>
+                    <TextView
+                        android:id="@+id/tvCartSub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        tools:text="브랜드별로 나뉘어 발주됩니다"/>
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnPlace"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="주문 확정"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
