@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_hq"
+    app:startDestination="@id/hqHomeFragment">
+
+    <fragment
+        android:id="@+id/hqHomeFragment"
+        android:name="com.songdosamgyeop.order.ui.hq.home.HqHomeFragment"
+        android:label="본사 홈" />
+
+    <fragment
+        android:id="@+id/hqRegistrationListFragment"
+        android:name="com.songdosamgyeop.order.ui.hq.registrationlist.HqRegistrationListFragment"
+        android:label="신청서" />
+
+    <fragment
+        android:id="@+id/hqOrdersFragment"
+        android:name="com.songdosamgyeop.order.ui.hq.orders.HqOrdersFragment"
+        android:label="주문 모니터링" />
+
+    <fragment
+        android:id="@+id/hqSettingsFragment"
+        android:name="com.songdosamgyeop.order.ui.hq.settings.HqSettingsFragment"
+        android:label="설정" />
+</navigation>

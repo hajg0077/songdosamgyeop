@@ -6,6 +6,7 @@ import com.google.firebase.Timestamp
 data class OrderRow(
     val id: String,
     val branchId: String,
+    val branchName: String?,   // ✅ 추가
     val ownerUid: String,
     val status: String,
     val placedAt: Timestamp?,   // PLACED일 때 사용

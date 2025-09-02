@@ -36,28 +36,6 @@ class OrdersRepository @Inject constructor(
             ?: throw IllegalStateException("users/$u 에 branchId가 없습니다.")
     }
 
-    /** 현재 사용자 DRAFT 주문 get or create → orderId 반환 */
-    suspend fun getOrCreateDraft(): String {
-        val u = uid()
-        // 기존 DRAFT 검색
-        val existing = db.collection("orders")
-            .whereEqualTo("ownerUid", u)
-            .whereEqualTo("status", OrderStatus.DRAFT.name)
-            .limit(1)
-            .get().await()
-        if (!existing.isEmpty) return existing.documents.first().id
-
-        // 없으면 생성
-        val branchId = fetchBranchId()
-        val data = mapOf(
-            "ownerUid" to u,
-            "branchId" to branchId,
-            "status" to OrderStatus.DRAFT.name,
-            "createdAt" to FieldValue.serverTimestamp()
-        )
-        return db.collection("orders").add(data).await().id
-    }
-
     /** 장바구니 항목 실시간 구독 */
     fun subscribeItems(orderId: String): Flow<List<CartItem>> = callbackFlow {
         val reg = db.collection("orders").document(orderId)
@@ -104,8 +82,41 @@ class OrdersRepository @Inject constructor(
         }
     }
 
+    /** branches/{branchId}.name → 없으면 branchId 반환 */
+    private suspend fun fetchBranchName(branchId: String): String {
+        val snap = db.collection("branches").document(branchId).get().await()
+        val name = snap.getString("name")?.trim()
+        return if (!name.isNullOrEmpty()) name else branchId
+    }
+
+    /** 현재 사용자 DRAFT 주문 get or create → orderId 반환 (지사명 디노멀라이즈 포함) */
+    suspend fun getOrCreateDraft(): String {
+        val u = uid()
+        val existing = db.collection("orders")
+            .whereEqualTo("ownerUid", u)
+            .whereEqualTo("status", OrderStatus.DRAFT.name)
+            .limit(1)
+            .get().await()
+        if (!existing.isEmpty) return existing.documents.first().id
+
+        val branchId = fetchBranchId()
+        val branchName = fetchBranchName(branchId)
+        val data = mapOf(
+            "ownerUid" to u,
+            "branchId" to branchId,
+            "branchName" to branchName,
+            "branchName_lower" to branchName.lowercase(),
+            "status" to OrderStatus.DRAFT.name,
+            "createdAt" to FieldValue.serverTimestamp()
+        )
+        return db.collection("orders").add(data).await().id
+    }
+
+    /** 상품 1개 추가/수량 변경은 기존 그대로… */
+
+    /** 주문 확정: 합계 계산 + (안전망) 지사명 보정 */
     suspend fun place(orderId: String) {
-        // 1) items 읽어서 합계 계산
+        // 합계 계산
         val itemsSnap = db.collection("orders").document(orderId)
             .collection("items").get().await()
         val total = itemsSnap.documents.sumOf { d ->
@@ -116,13 +127,20 @@ class OrdersRepository @Inject constructor(
         }
         val itemsCount = itemsSnap.size()
 
-        // 2) 주문 상태/합계/개수 기록
-        db.collection("orders").document(orderId).set(
+        // 지사명 안전 보정
+        val orderRef = db.collection("orders").document(orderId)
+        val orderSnap = orderRef.get().await()
+        val branchId = orderSnap.getString("branchId") ?: fetchBranchId()
+        val branchName = orderSnap.getString("branchName") ?: fetchBranchName(branchId)
+
+        orderRef.set(
             mapOf(
                 "status" to OrderStatus.PLACED.name,
                 "placedAt" to FieldValue.serverTimestamp(),
                 "totalAmount" to total,
-                "itemsCount" to itemsCount
+                "itemsCount" to itemsCount,
+                "branchName" to branchName,
+                "branchName_lower" to branchName.lowercase()
             ),
             com.google.firebase.firestore.SetOptions.merge()
         ).await()

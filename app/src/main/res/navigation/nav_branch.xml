@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_branch"
+    app:startDestination="@id/branchHomeFragment">
+
+    <fragment
+        android:id="@+id/branchHomeFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.home.BranchHomeFragment"
+        android:label="지사 홈" />
+
+    <fragment
+        android:id="@+id/productsFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.products.ProductsFragment"
+        android:label="상품" />
+
+    <fragment
+        android:id="@+id/cartFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.cart.CartFragment"
+        android:label="장바구니" />
+
+    <fragment
+        android:id="@+id/branchOrdersFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.orders.BranchOrdersFragment"
+        android:label="주문" />
+</navigation>
