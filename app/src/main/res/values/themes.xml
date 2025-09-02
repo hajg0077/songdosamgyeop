@@ -1,29 +1,27 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- 앱 전체 테마: M3, NoActionBar -->
-    <style name="Theme.SongdoSamgyeop" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- 기본 색상: 다이내믹 컬러(안드12+) 우선, 미지원 기기는 아래 colors.xml로 Fallback -->
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">false</item>
+<resources>
+    <!-- DayNight 말고 Light 고정 -->
+    <style name="Theme.Songdo" parent="Theme.Material3.Light.NoActionBar">
+        <!-- 네가 정한 브랜드 컬러들만 사용 -->
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorOnPrimary">@color/brand_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/brand_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/brand_onPrimaryContainer</item>
 
-        <!-- 컴포넌트 라운드/엘리베이션 -->
-        <item name="shapeAppearanceSmallComponent">@style/Shape.Small</item>
-        <item name="shapeAppearanceMediumComponent">@style/Shape.Medium</item>
-        <item name="shapeAppearanceLargeComponent">@style/Shape.Large</item>
+        <item name="colorSecondary">@color/brand_secondary</item>
+        <item name="colorOnSecondary">@color/brand_onSecondary</item>
 
-        <!-- 텍스트필드 라벨 애니메이션/스타일은 M3 기본 사용 -->
-    </style>
+        <item name="colorBackground">@color/brand_background</item>
+        <item name="colorOnBackground">@color/brand_onBackground</item>
+        <item name="colorSurface">@color/brand_surface</item>
+        <item name="colorOnSurface">@color/brand_onSurface</item>
+        <item name="colorOutline">@color/brand_outline</item>
 
-    <!-- 둥글기(2xl 느낌) -->
-    <style name="Shape.Small">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">12dp</item>
-    </style>
-    <style name="Shape.Medium">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">16dp</item>
-    </style>
-    <style name="Shape.Large">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">24dp</item>
+        <!-- Force Dark(안드10+) 비활성화 -->
+        <item name="android:forceDarkAllowed">false</item>
+        <item name="forceDarkAllowed">false</item>
+
+        <!-- 상태바/내비게이션 아이콘 가독성 -->
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>

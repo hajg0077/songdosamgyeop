@@ -7,4 +7,21 @@
     <color name="md_theme_onSurface">#1C1B1F</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="brand_primary">#CFA67A</color>
+    <color name="brand_onPrimary">#23160A</color>
+    <color name="brand_primaryContainer">#F4E0C8</color>
+    <color name="brand_onPrimaryContainer">#23160A</color>
+
+    <color name="brand_secondary">#E53935</color>
+    <color name="brand_onSecondary">#FFFFFF</color>
+
+    <color name="brand_background">#FFF8EE</color>
+    <color name="brand_onBackground">#201A16</color>
+    <color name="brand_surface">#FFFBF4</color>
+    <color name="brand_onSurface">#201A16</color>
+    <color name="brand_outline">#735F4B</color>
+
+    <color name="brand_error">#BA1A1A</color>
+    <color name="brand_onError">#FFFFFF</color>
 </resources>

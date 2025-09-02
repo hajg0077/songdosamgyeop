@@ -22,5 +22,16 @@
     <fragment
         android:id="@+id/branchOrdersFragment"
         android:name="com.songdosamgyeop.order.ui.branch.orders.BranchOrdersFragment"
-        android:label="주문" />
+        android:label="주문">
+        <action
+            android:id="@+id/action_branchOrders_to_branchOrderDetail"
+            app:destination="@id/branchOrderDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/branchOrderDetailFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.orders.detail.BranchOrderDetailFragment"
+        android:label="주문 상세">
+        <argument android:name="orderId" app:argType="string" />
+    </fragment>
 </navigation>
