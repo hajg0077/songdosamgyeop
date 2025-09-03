@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.songdosamgyeop.order.core.model.UserRole
 import com.songdosamgyeop.order.data.repo.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import jakarta.inject.Inject
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 @HiltViewModel

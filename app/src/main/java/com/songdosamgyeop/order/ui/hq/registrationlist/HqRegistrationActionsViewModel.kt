@@ -30,15 +30,27 @@ class HqRegistrationActionsViewModel @Inject constructor(
             _message.value = Result.failure(IllegalStateException("서버 기능(Functions) 미연결"))
             return
         }
-        // (나중에 Functions 연결하면 아래 실제 호출 로직 활성화)
         _busy.value = true
         viewModelScope.launch {
-            runCatching {
-                val res = functions.getHttpsCallable(fn).call(data).await()
-                res.data?.toString() ?: "OK"
-            }.onSuccess { _message.value = Result.success(it) }
-                .onFailure { _message.value = Result.failure(it) }
-            _busy.value = false
+            try {
+                val result = functions.getHttpsCallable(fn).call(data).await()
+
+                // ✅ data 프로퍼티 직접 접근 X, getData() 사용
+                val payload: Any? = result.getData()
+
+                val msg = when (payload) {
+                    is Map<*, *> -> payload["message"]?.toString() ?: "OK"
+                    is String -> payload
+                    null -> "OK"
+                    else -> payload.toString()
+                }
+                _message.value = Result.success(msg)
+            } catch (t: Throwable) {
+                _message.value = Result.failure(t)
+            } finally {
+                _busy.value = false
+            }
         }
     }
+
 }

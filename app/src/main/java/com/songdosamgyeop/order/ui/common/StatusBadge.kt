@@ -17,9 +17,10 @@ fun applyOrderStatusChip(chip: Chip, status: String?) {
         chip.text = label
         chip.isCheckable = false
         chip.isClickable = false
-        chip.chipBackgroundColor = com.google.android.material.color.MaterialColors.getColorStateList(
-            ctx, containerAttr
+        val color = MaterialColors.getColor(
+            chip, containerAttr
         )
+        chip.chipBackgroundColor = android.content.res.ColorStateList.valueOf(color)
         chip.setTextColor(MaterialColors.getColor(chip, onContainerAttr))
     }
 

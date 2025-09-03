@@ -21,13 +21,13 @@ class CartAdapter(
     }
 
     override fun onBindViewHolder(h: VH, pos: Int) {
-        val it = getItem(pos)
+        val item = getItem(pos)
         val nf = NumberFormat.getNumberInstance(Locale.KOREA)
-        h.b.tvName.text = it.name
-        h.b.tvQty.text = it.qty.toString()
-        h.b.tvPrice.text = "${nf.format(it.unitPrice)}원 x ${it.qty} = ${nf.format(it.lineTotal)}원"
-        h.b.btnInc.setOnClickListener { onInc(it) }
-        h.b.btnDec.setOnClickListener { onDec(it) }
+        h.b.tvName.text = item.name
+        h.b.tvQty.text = item.qty.toString()
+        h.b.tvPrice.text = "${nf.format(item.unitPrice)}원 x ${item.qty} = ${nf.format(item.lineTotal)}원"
+        h.b.btnInc.setOnClickListener { onInc(item) }
+        h.b.btnDec.setOnClickListener { onDec(item) }
     }
 
     companion object {

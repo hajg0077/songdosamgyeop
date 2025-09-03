@@ -15,7 +15,7 @@ class RegistrationAdapter(
         val binding: ItemRegistrationBinding,
         private val onClickAt: (Int) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
-        init { binding.root.setOnClickListener { onClickAt(bindingAdapterPosition) } }
+        init { binding.root.setOnClickListener { onClickAt(adapterPosition) } }
 
         fun bind(item: Pair<String, Registration>) {
             val (_, reg) = item

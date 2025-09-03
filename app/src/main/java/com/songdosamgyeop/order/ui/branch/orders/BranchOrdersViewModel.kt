@@ -3,7 +3,6 @@ package com.songdosamgyeop.order.ui.branch.orders
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.Timestamp
 import com.songdosamgyeop.order.data.repo.OrdersRepository
 import com.songdosamgyeop.order.ui.hq.orders.OrderDisplayRow
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import java.security.Timestamp
 
 /**
  * 브랜치 주문 히스토리 VM
@@ -32,7 +32,8 @@ class BranchOrdersViewModel @Inject constructor(
         .asLiveData(viewModelScope.coroutineContext)
 
     /** 기간 설정([start, endExclusive)) */
-    fun setDateRange(start: Timestamp?, endExclusive: Timestamp?) {
-        from.value = start; to.value = endExclusive
+    fun setDateRange(start: com.google.firebase.Timestamp?, endExclusive: com.google.firebase.Timestamp?) {
+        from.value = start
+        to.value = endExclusive
     }
 }

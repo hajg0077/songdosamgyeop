@@ -101,11 +101,6 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
 
             override fun onMenuItemSelected(item: MenuItem): Boolean {
                 if (item.itemId == R.id.action_export_csv) {
-                    if (!BuildConfig.FEATURE_EXPORT) {
-                        Snackbar.make(b.root, "CSV 내보내기는 추후 제공 예정입니다.", Snackbar.LENGTH_SHORT)
-                            .show()
-                        return true
-                    }
                     val ts = SimpleDateFormat("yyyyMMdd_HHmm", Locale.KOREA).format(Date())
                     createCsv.launch("orders_$ts.csv")
                     return true

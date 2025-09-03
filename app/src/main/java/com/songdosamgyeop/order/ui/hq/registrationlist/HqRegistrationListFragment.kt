@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.os.Bundle
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf // ✅ Safe Args 대신 번들 네비게이션
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -28,7 +29,6 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
 
     private lateinit var adapter: RegistrationAdapter
 
-    // 마지막 동작 기록 → 스낵바 “되돌리기” 시 반대 동작 수행
     private data class LastAction(val docId: String, val type: ActionType)
     private enum class ActionType { APPROVE, REJECT }
     private var lastAction: LastAction? = null
@@ -37,42 +37,50 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         val b = FragmentHqRegistrationListBinding.bind(view)
 
         adapter = RegistrationAdapter { id, reg ->
-            val action = HqRegistrationListFragmentDirections
-                .actionHqRegistrationListFragmentToHqRegistrationDetailFragment(
-                    id, reg.email, reg.name, reg.branchName, reg.branchCode, reg.phone, reg.memo
-                )
-            findNavController().navigate(action)
+            // ✅ Safe Args 제거: 번들로 직접 전달
+            val actionId = R.id.action_hqRegistrationListFragment_to_hqRegistrationDetailFragment
+            val args = bundleOf(
+                "id" to id,
+                "email" to reg.email,
+                "name" to reg.name,
+                "branchName" to reg.branchName,
+                "branchCode" to reg.branchCode,
+                "phone" to reg.phone,
+                "memo" to reg.memo
+            )
+            findNavController().navigate(actionId, args)
         }
         b.recycler.adapter = adapter
 
-        vm.pendingList.observe(viewLifecycleOwner) { list ->
+        // ❌ vm.pendingList ... (전부 삭제)
+        // ✅ 통합된 목록 LiveData 사용
+        vm.list.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list)
+            b.tvEmpty.visibility = if (list.isNullOrEmpty()) View.VISIBLE else View.GONE
         }
 
         // 스와이프
-        val touchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0,
-            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-
+        val touchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+        ) {
             override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder) = false
 
             override fun onSwiped(holder: RecyclerView.ViewHolder, direction: Int) {
-                val pos = holder.bindingAdapterPosition
+                val pos = holder.adapterPosition // ✅ bindingAdapterPosition → absoluteAdapterPosition
+                if (pos == RecyclerView.NO_POSITION) return
                 val item = adapter.currentList.getOrNull(pos)
                 if (item == null) { adapter.notifyItemChanged(pos); return }
                 val (docId, reg) = item
 
                 if (direction == ItemTouchHelper.RIGHT) {
-                    // 승인
                     lastAction = LastAction(docId, ActionType.APPROVE)
                     actionsVm.approve(docId)
-                    // 낙관적 제거: PENDING 목록에서 사라지게 즉시 필터링
                     removeFromList(docId)
                     showUndoSnackbar(b, "승인 처리됨")
                 } else {
-                    // 반려(사유 입력)
                     showRejectDialog { reason ->
                         if (reason == null) {
-                            adapter.notifyItemChanged(pos) // 취소
+                            adapter.notifyItemChanged(pos)
                         } else {
                             lastAction = LastAction(docId, ActionType.REJECT)
                             actionsVm.reject(docId, reason)
@@ -83,7 +91,6 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                 }
             }
 
-            // 배경 + 아이콘 그리기
             override fun onChildDraw(
                 c: Canvas, rv: RecyclerView, vh: RecyclerView.ViewHolder,
                 dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean
@@ -95,11 +102,7 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                 val iconMargin = height / 4
 
                 if (dX > 0) {
-                    // Approve: 초록 배경 + 체크
-                    val bg = MaterialColors.getColor(
-                        item,
-                        com.google.android.material.R.attr.colorPrimary
-                    ).toDrawable()
+                    val bg = MaterialColors.getColor(item, com.google.android.material.R.attr.colorPrimary).toDrawable()
                     bg.setBounds(item.left, item.top, item.left + dX.toInt(), item.bottom)
                     bg.draw(c)
                     val icon = ContextCompat.getDrawable(ctx, R.drawable.ic_check_24)
@@ -112,10 +115,7 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                         it.draw(c)
                     }
                 } else if (dX < 0) {
-                    // Reject: 빨강 배경 + X
-                    val bg =
-                        MaterialColors.getColor(item, com.google.android.material.R.attr.colorError)
-                            .toDrawable()
+                    val bg = MaterialColors.getColor(item, com.google.android.material.R.attr.colorError).toDrawable()
                     bg.setBounds(item.right + dX.toInt(), item.top, item.right, item.bottom)
                     bg.draw(c)
                     val icon = ContextCompat.getDrawable(ctx, R.drawable.ic_close_24)
@@ -138,27 +138,21 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                 Snackbar.make(b.root, it, Snackbar.LENGTH_SHORT).show()
             }.onFailure {
                 // 서버 실패 → 목록 복구
-                vm.pendingList.value?.let { current -> adapter.submitList(current) }
+                vm.list.value?.let { current -> adapter.submitList(current) } // ✅ pendingList → list
                 Snackbar.make(b.root, it.message ?: "처리에 실패했습니다.", Snackbar.LENGTH_LONG).show()
             }
         }
 
-
-        // ✅ 목록 구독: VM.list 로 변경
-        vm.list.observe(viewLifecycleOwner) { list ->
-            adapter.submitList(list)
-            b.tvEmpty.visibility = if (list.isNullOrEmpty()) View.VISIBLE else View.GONE
-        }
-
-        // ✅ 검색창 연결
+        // 검색창 연결
         b.etSearch.doOnTextChanged { text, _, _, _ ->
             vm.setQuery(text?.toString().orEmpty())
         }
 
-        // ✅ 상태 칩 연결
+        // 상태 칩 연결
         b.chipPending.setOnClickListener { vm.setStatus(RegistrationStatus.PENDING) }
         b.chipApproved.setOnClickListener { vm.setStatus(RegistrationStatus.APPROVED) }
         b.chipRejected.setOnClickListener { vm.setStatus(RegistrationStatus.REJECTED) }
+
         b.recycler.addItemDecoration(
             SpacingItemDecoration(resources.getDimensionPixelSize(R.dimen.list_item_space))
         )
@@ -169,19 +163,17 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         adapter.submitList(newList)
     }
 
-    private fun showUndoSnackbar(b: FragmentHqRegistrationListBinding, msg: String) {nvm - v
-
+    private fun showUndoSnackbar(b: FragmentHqRegistrationListBinding, msg: String) {
+        // ✅ 이상한 토큰 제거 (nvm - v)
         Snackbar.make(b.root, msg, Snackbar.LENGTH_LONG)
             .setAction("되돌리기") {
                 val a = lastAction ?: return@setAction
-                // 반대 동작 호출
                 when (a.type) {
                     ActionType.APPROVE -> actionsVm.reject(a.docId, "Undo via UI")
                     ActionType.REJECT -> actionsVm.approve(a.docId)
                 }
-                // 화면 목록도 반대 동작 가정 하에 복구: (서버가 다시 PENDING으로 만드는 게 아니라면, HQ용에서 보일 리스트는 데이터 소스 기준으로 재구독됨)
-                // 임시로 전체 새로고침 유도
-                vm.pendingList.value?.let { current -> adapter.submitList(current) }
+                // 임시 복구: 최신 상태 재적용
+                vm.list.value?.let { current -> adapter.submitList(current) } // ✅ pendingList → list
             }
             .show()
     }

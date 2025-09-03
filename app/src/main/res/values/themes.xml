@@ -1,7 +1,7 @@
 <resources>
     <!-- DayNight 말고 Light 고정 -->
     <style name="Theme.Songdo" parent="Theme.Material3.Light.NoActionBar">
-        <!-- 네가 정한 브랜드 컬러들만 사용 -->
+        <!-- 브랜드 컬러 -->
         <item name="colorPrimary">@color/brand_primary</item>
         <item name="colorOnPrimary">@color/brand_onPrimary</item>
         <item name="colorPrimaryContainer">@color/brand_primaryContainer</item>
@@ -10,18 +10,24 @@
         <item name="colorSecondary">@color/brand_secondary</item>
         <item name="colorOnSecondary">@color/brand_onSecondary</item>
 
-        <item name="colorBackground">@color/brand_background</item>
+        <!-- ⬇️ 여기만 플랫폼 속성으로 변경 -->
+        <item name="android:colorBackground">@color/brand_background</item>
         <item name="colorOnBackground">@color/brand_onBackground</item>
+
         <item name="colorSurface">@color/brand_surface</item>
         <item name="colorOnSurface">@color/brand_onSurface</item>
         <item name="colorOutline">@color/brand_outline</item>
 
         <!-- Force Dark(안드10+) 비활성화 -->
         <item name="android:forceDarkAllowed">false</item>
-        <item name="forceDarkAllowed">false</item>
 
         <!-- 상태바/내비게이션 아이콘 가독성 -->
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
     </style>
+    <!-- Material3 "Filled" 별칭 (기본 버튼) -->
+    <style name="Widget.Material3.Button.FilledButton" parent="Widget.Material3.Button" />
+
+    <!-- 만약 layout에 사용됐다면 대비용: FilledTonal 별칭을 Tonal로 연결 -->
+    <style name="Widget.Material3.Button.FilledTonalButton" parent="Widget.Material3.Button.TonalButton" />
 </resources>

@@ -4,9 +4,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.songdosamgyeop.order.data.repo.AuthRepository
 import com.songdosamgyeop.order.data.repo.BranchRegistrationRepository
-import com.songdosamgyeop.order.data.repo.RegistrationRepository
-import com.songdosamgyeop.order.data.repo.RegistrationRepositoryImpl
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,21 +17,16 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object RepoModule {
 
-    /**
-     * AuthRepository 인스턴스를 싱글톤으로 제공한다.
-     *
-     * @param auth FirebaseAuth 주입
-     * @param firestore FirebaseFirestore 주입
-     */
-    @Provides
-    @Singleton
+    /** AuthRepository 인스턴스를 싱글톤으로 제공한다. */
+    @Provides @Singleton
     fun provideAuthRepository(
         auth: FirebaseAuth,
         firestore: FirebaseFirestore
     ): AuthRepository = AuthRepository(auth, firestore)
-}
 
-@Provides @Singleton
-fun provideBranchRegistrationRepository(
-    firestore: FirebaseFirestore
-): BranchRegistrationRepository = BranchRegistrationRepository(firestore)
+    /** BranchRegistrationRepository 인스턴스를 싱글톤으로 제공한다. */
+    @Provides @Singleton
+    fun provideBranchRegistrationRepository(
+        firestore: FirebaseFirestore
+    ): BranchRegistrationRepository = BranchRegistrationRepository(firestore)
+}

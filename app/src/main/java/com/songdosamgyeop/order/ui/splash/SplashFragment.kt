@@ -1,6 +1,6 @@
 package com.songdosamgyeop.order.ui.splash
 
-import android.R
+import com.songdosamgyeop.order.R
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment

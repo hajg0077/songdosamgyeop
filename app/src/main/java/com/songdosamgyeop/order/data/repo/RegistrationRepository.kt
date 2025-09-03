@@ -79,8 +79,17 @@ class RegistrationRepository @Inject constructor(
     fun observeRegistration(docId: String): Flow<Registration?> = callbackFlow {
         val ref = db.collection("registrations").document(docId)
         val reg = ref.addSnapshotListener { snap, e ->
-            if (e != null) { trySend(null); return@addSnapshotListener }
-            val data = snap?.data ?: return@addSnapshotListener trySend(null)
+            if (e != null) {
+                trySend(null)
+                return@addSnapshotListener
+            }
+
+            val data = snap?.data
+            if (data == null) {
+                trySend(null)
+                return@addSnapshotListener
+            }
+
             trySend(
                 Registration(
                     id = snap.id,
@@ -92,6 +101,7 @@ class RegistrationRepository @Inject constructor(
                     memo = data["memo"] as? String
                 )
             )
+            // 필요하면 성공여부 소비: trySend(...).isSuccess
         }
         awaitClose { reg.remove() }
     }
