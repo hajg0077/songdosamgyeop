@@ -13,4 +13,15 @@
     <string name="msg_waiting_approval">승인 대기 중입니다. 본사 승인 후 로그인 가능합니다.</string>
     <string name="msg_submit_ok">신청서가 제출되었습니다. 승인 대기 화면으로 이동합니다.</string>
     <string name="msg_submit_fail">제출에 실패했습니다. 잠시 후 다시 시도하세요.</string>
+
+    <string name="badge_draft">임시저장</string>
+    <string name="badge_placed">접수</string>
+    <string name="badge_preparing">준비중</string>
+    <string name="badge_shipped">출고완료</string>
+    <string name="badge_canceled">취소</string>
+
+
+    <string name="msg_order_not_found">주문을 찾을 수 없습니다.</string>
+    <string name="hq_order_detail_summary">합계 %1$s · %2$s · %3$s</string>
+    <string name="hq_order_detail_branch">지사: %1$s</string>
 </resources>
