@@ -3,29 +3,64 @@ package com.songdosamgyeop.order.ui.hq.orders.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import com.songdosamgyeop.order.data.repo.HqOrdersRepository
+import com.google.firebase.Timestamp
+import com.songdosamgyeop.order.data.repo.OrdersRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.Date
 import javax.inject.Inject
+import kotlinx.coroutines.flow.map
 
-/**
- * HQ 주문 상세 VM
- * - SavedStateHandle에서 orderId 수신
- * - 헤더/아이템 각각 실시간 구독
- */
+/** 주문 상세: 헤더 + 아이템 구독 */
 @HiltViewModel
 class HqOrderDetailViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
-    repo: HqOrdersRepository
+    private val ordersRepo: OrdersRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    /** 네비게이션 인자: 주문 ID (필수) */
-    val orderId: String = checkNotNull(savedStateHandle.get<String>("orderId")) {
-        "orderId argument is required"
-    }
+    private val orderId: String =
+        savedStateHandle.get<String>("orderId") ?: savedStateHandle.get<String>("id") ?: ""
 
-    /** 상단 요약 정보 */
-    val header = repo.observeOrderHeader(orderId).asLiveData()
+    data class Header(
+        val id: String,
+        val branchId: String,
+        val brandId: String?,
+        val status: String?,
+        val itemsCount: Int?,
+        val totalAmount: Long?,
+        val placedAt: Date?,
+        val createdAt: Date?
+    )
 
-    /** 라인아이템 목록 */
-    val items = repo.observeOrderItems(orderId).asLiveData()
+    data class ItemRow(
+        val name: String,
+        val unitPrice: Long,
+        val qty: Int,
+        val lineTotal: Long
+    )
+
+    /** 헤더 구독 (Timestamp → Date 변환) */
+    val header = ordersRepo.observeOrderHeader(orderId).map { o ->
+        if (o == null) null else Header(
+            id = o.id,
+            branchId = o.branchId,
+            brandId = o.brandId,
+            status = o.status,
+            itemsCount = o.itemsCount,
+            totalAmount = o.totalAmount,
+            placedAt = o.placedAt?.toDate(),
+            createdAt = o.createdAt?.toDate()
+        )
+    }.asLiveData()
+
+    /** 아이템 구독 */
+    val items = ordersRepo.observeOrderItems(orderId).map { list ->
+        list.map { i ->
+            ItemRow(
+                name = i.name,
+                unitPrice = i.unitPrice,
+                qty = i.qty,
+                lineTotal = i.unitPrice * i.qty
+            )
+        }
+    }.asLiveData()
 }

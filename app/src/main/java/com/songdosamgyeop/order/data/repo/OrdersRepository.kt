@@ -7,8 +7,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
-import com.google.firebase.firestore.WriteBatch
-import com.google.firebase.firestore.ktx.toObject
 import com.songdosamgyeop.order.core.model.OrderStatus
 import com.songdosamgyeop.order.data.model.CartItem
 import com.songdosamgyeop.order.data.model.CartLine
@@ -17,7 +15,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import java.security.Timestamp
+import com.google.firebase.Timestamp                // ✅ firebase Timestamp로 교체
 import javax.inject.Inject
 
 /**
@@ -92,11 +90,15 @@ class OrdersRepository @Inject constructor(
         db.runTransaction { tx ->
             val snap = tx.get(ref)
             val prev = (snap.getLong("qty") ?: 0L).toInt()
-            tx.set(ref, mapOf(
-                "name" to p.name,
-                "unitPrice" to p.price,
-                "qty" to prev + 1
-            ), com.google.firebase.firestore.SetOptions.merge())
+            tx.set(
+                ref,
+                mapOf(
+                    "name" to p.name,
+                    "unitPrice" to p.price,
+                    "qty" to prev + 1
+                ),
+                SetOptions.merge()                     // ✅ FQCN → 임포트 사용
+            )
         }.await()
     }
 
@@ -107,7 +109,7 @@ class OrdersRepository @Inject constructor(
         if (qty <= 0) {
             ref.delete().await()
         } else {
-            ref.set(mapOf("qty" to qty), com.google.firebase.firestore.SetOptions.merge()).await()
+            ref.set(mapOf("qty" to qty), SetOptions.merge()).await()
         }
     }
 
@@ -141,12 +143,10 @@ class OrdersRepository @Inject constructor(
         return db.collection("orders").add(data).await().id
     }
 
-
     /** 주문의 items 서브컬렉션을 라인으로 채운다(덮어쓰기). */
     suspend fun putItems(orderId: String, lines: List<CartLine>) {
-        val batch: WriteBatch = db.batch()
+        val batch = db.batch()
         val items = db.collection("orders").document(orderId).collection("items")
-        // 같은 productId를 docId로 쓰면 수량 변경 시 덮어쓰기 편함
         lines.forEach { l ->
             val ref = items.document(l.productId)
             val m = mapOf(
@@ -188,8 +188,8 @@ class OrdersRepository @Inject constructor(
      * - 기간 필터: [from, to) (둘 중 null 허용)
      */
     fun subscribeMyOrders(
-        from: Timestamp? = null,
-        to: Timestamp? = null
+        from: Timestamp? = null,            // ✅ 타입 통일
+        to: Timestamp? = null               // ✅ 타입 통일
     ): Flow<List<com.songdosamgyeop.order.data.model.OrderRow>> = callbackFlow {
         val u = uid()
         var q: Query = db.collection("orders")
@@ -257,6 +257,43 @@ class OrdersRepository @Inject constructor(
                     name = m["name"] as? String ?: "",
                     unitPrice = (m["unitPrice"] as? Number)?.toLong() ?: 0L,
                     qty = (m["qty"] as? Number)?.toInt() ?: 0
+                )
+            } ?: emptyList()
+            trySend(list)
+        }
+        awaitClose { reg.remove() }
+    }
+
+    fun subscribeOrdersForHQ(
+        brandId: String?,          // null 이면 전체
+        status: String?,           // null 이면 전체
+        from: Timestamp?,          // null 허용
+        to: Timestamp?             // null 허용 (exclusive)
+    ): Flow<List<com.songdosamgyeop.order.data.model.OrderRow>> = callbackFlow {
+        var q: Query = db.collection("orders")
+
+        if (!brandId.isNullOrBlank()) q = q.whereEqualTo("brandId", brandId)
+        if (!status.isNullOrBlank())  q = q.whereEqualTo("status", status)
+        if (from != null) q = q.whereGreaterThanOrEqualTo("placedAt", from)
+        if (to != null)   q = q.whereLessThan("placedAt", to)
+
+        // 최신순
+        q = q.orderBy("placedAt", Query.Direction.DESCENDING)
+
+        val reg = q.addSnapshotListener { snap, e ->
+            if (e != null) { trySend(emptyList()); return@addSnapshotListener }
+            val list = snap?.documents?.map { d ->
+                val m = d.data ?: emptyMap<String, Any?>()
+                com.songdosamgyeop.order.data.model.OrderRow(
+                    id = d.id,
+                    branchId = m["branchId"] as? String ?: "-",
+                    branchName = m["branchName"] as? String,
+                    ownerUid  = m["ownerUid"] as? String ?: "",
+                    status    = m["status"] as? String ?: "UNKNOWN",
+                    placedAt  = m["placedAt"] as? com.google.firebase.Timestamp,
+                    createdAt = m["createdAt"] as? com.google.firebase.Timestamp,
+                    itemsCount = (m["itemsCount"] as? Number)?.toInt(),
+                    totalAmount = (m["totalAmount"] as? Number)?.toLong()
                 )
             } ?: emptyList()
             trySend(list)

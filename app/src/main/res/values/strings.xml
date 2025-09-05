@@ -24,4 +24,12 @@
     <string name="msg_order_not_found">주문을 찾을 수 없습니다.</string>
     <string name="hq_order_detail_summary">합계 %1$s · %2$s · %3$s</string>
     <string name="hq_order_detail_branch">지사: %1$s</string>
+
+    <string name="menu_export_csv">CSV 내보내기</string>
+    <string name="msg_export_success">CSV로 내보냈습니다.</string>
+    <string name="msg_export_failed">CSV 내보내기에 실패했습니다.</string>
+
+
+    <string name="msg_order_items_empty">항목이 없습니다.</string>
+    <string name="title_hq_order_detail">주문 상세</string>
 </resources>

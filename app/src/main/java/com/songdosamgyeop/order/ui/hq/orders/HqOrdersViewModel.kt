@@ -1,15 +1,17 @@
-// ui/hq/orders/HqOrdersViewModel.kt
 package com.songdosamgyeop.order.ui.hq.orders
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
 import com.google.firebase.Timestamp
 import com.songdosamgyeop.order.data.repo.HqOrdersRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 
 @HiltViewModel
 class HqOrdersViewModel @Inject constructor(
@@ -21,14 +23,26 @@ class HqOrdersViewModel @Inject constructor(
     private val from = MutableStateFlow<Timestamp?>(null)
     private val to   = MutableStateFlow<Timestamp?>(null)
 
+    data class Params(
+        val status: String,
+        val branchNamePrefix: String?,
+        val from: Timestamp?,
+        val to: Timestamp?
+    )
+
     @OptIn(FlowPreview::class)
     val displayList = combine(
         status,
-        branchNameQuery.debounce(200),
+        branchNameQuery.debounce(200).map { it?.trim() },
         from,
         to
     ) { s, nameQ, f, t ->
-        Params(s, nameQ?.takeIf { !it.isNullOrBlank() }, f, t)
+        Params(
+            status = s,
+            branchNamePrefix = nameQ?.takeIf { it.isNotBlank() },
+            from = f,
+            to = t
+        )
     }.flatMapLatest { p ->
         repo.subscribeOrders(
             status = p.status,
@@ -37,14 +51,7 @@ class HqOrdersViewModel @Inject constructor(
             to = p.to
         )
     }.map { rows -> rows.map { OrderDisplayRow.from(it) } }
-        .asLiveData(viewModelScope.coroutineContext)
-
-    data class Params(
-        val status: String,
-        val branchNamePrefix: String?,
-        val from: Timestamp?,
-        val to: Timestamp?
-    )
+        .asLiveData()
 
     fun setBranchNameQuery(value: String?) { branchNameQuery.value = value }
     fun setDateRange(start: Timestamp?, endExclusive: Timestamp?) { from.value = start; to.value = endExclusive }

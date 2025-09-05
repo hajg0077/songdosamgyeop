@@ -3,6 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_export_csv"
-        android:title="내보내기"
-        app:showAsAction="ifRoom"/>
+        android:title="@string/menu_export_csv"
+        app:showAsAction="never" />
 </menu>

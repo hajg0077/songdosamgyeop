@@ -3,34 +3,37 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent" android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        app:navigationIcon="?attr/homeAsUpIndicator"
-        app:title="주문 상세" />
+        android:title="@string/title_hq_order_detail"
+        app:navigationIcon="@drawable/ic_arrow_back_24" />  <!-- ✅ 명시 아이콘 사용 -->
 
     <LinearLayout
-        android:layout_width="match_parent" android:layout_height="match_parent"
-        android:orientation="vertical" android:padding="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="12dp"
         android:layout_marginTop="?attr/actionBarSize">
 
         <!-- 상단 요약 카드 -->
         <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp" app:strokeWidth="1dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            app:strokeWidth="1dp"
             app:strokeColor="?attr/colorOutline">
 
-            <!-- 상단 요약 카드 내부 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="14dp">
 
-                <!-- 지사명 + 상태 배지 한 줄 -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -43,7 +46,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:textStyle="bold"
-                        tools:text="인천송도점"/>
+                        tools:text="BR_000123"/>
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipStatus"
@@ -74,17 +77,19 @@
         <!-- 아이템 리스트 -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler"
-            android:layout_width="match_parent" android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
             tools:listitem="@layout/item_order_line"
-            tools:itemCount="3"/>
+        tools:itemCount="3"/>
 
         <!-- 빈 상태 -->
         <TextView
             android:id="@+id/tvEmpty"
-            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="항목이 없습니다."
+            android:text="@string/msg_order_items_empty"
             android:visibility="gone"/>
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
