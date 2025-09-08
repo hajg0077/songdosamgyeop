@@ -1,27 +1,35 @@
-package com.songdosamgyeop.order.ui.hq.orders
-
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import com.google.firebase.Timestamp
 import com.songdosamgyeop.order.data.repo.HqOrdersRepository
+import com.songdosamgyeop.order.ui.hq.orders.OrderDisplayRow
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import java.security.Timestamp
+import javax.inject.Inject
 
 @HiltViewModel
 class HqOrdersViewModel @Inject constructor(
-    private val repo: HqOrdersRepository
+    private val repo: HqOrdersRepository,
+    private val saved: SavedStateHandle
 ) : ViewModel() {
 
-    private val status = MutableStateFlow("PLACED")
-    private val branchNameQuery = MutableStateFlow<String?>(null)
-    private val from = MutableStateFlow<Timestamp?>(null)
-    private val to   = MutableStateFlow<Timestamp?>(null)
+    private companion object {
+        const val K_STATUS = "orders.status"
+        const val K_BRANCH = "orders.branchQ"
+        const val K_FROM   = "orders.from"
+        const val K_TO     = "orders.to"
+    }
+    private val status = MutableStateFlow(saved.get<String>(K_STATUS) ?: "PLACED")
+    private val branchNameQuery = MutableStateFlow<String?>(saved.get<String?>(K_BRANCH))
+    private val from = MutableStateFlow<Timestamp?>(saved.get<Timestamp?>(K_FROM))
+    private val to   = MutableStateFlow<Timestamp?>(saved.get<Timestamp?>(K_TO))
+
 
     data class Params(
         val status: String,
@@ -47,13 +55,27 @@ class HqOrdersViewModel @Inject constructor(
         repo.subscribeOrders(
             status = p.status,
             branchNamePrefix = p.branchNamePrefix,
-            from = p.from,
-            to = p.to
+            from = p.from as com.google.firebase.Timestamp?,
+            to = p.to as com.google.firebase.Timestamp?
         )
     }.map { rows -> rows.map { OrderDisplayRow.from(it) } }
         .asLiveData()
 
-    fun setBranchNameQuery(value: String?) { branchNameQuery.value = value }
-    fun setDateRange(start: Timestamp?, endExclusive: Timestamp?) { from.value = start; to.value = endExclusive }
-    fun setStatus(value: String) { status.value = value }
+    fun setBranchNameQuery(value: String?) {
+        branchNameQuery.value = value
+        saved[K_BRANCH] = value
+    }
+    fun setDateRange(start: Timestamp?, endExclusive: Timestamp?) {
+        from.value = start; to.value = endExclusive
+        saved[K_FROM] = start; saved[K_TO] = endExclusive
+    }
+    fun setStatus(value: String) {
+        status.value = value
+        saved[K_STATUS] = value
+    }
+
+    fun refresh() {
+        status.value = status.value; branchNameQuery.value = branchNameQuery.value
+        from.value = from.value; to.value = to.value
+    }
 }

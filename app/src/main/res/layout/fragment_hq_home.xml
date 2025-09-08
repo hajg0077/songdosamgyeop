@@ -1,17 +1,188 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="본사 홈"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_margin="20dp"/>
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- 상태/에러 안내 -->
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="로딩 중…"
+            android:paddingBottom="8dp"
+            android:visibility="gone"/>
+
+        <!-- 오늘 주문 -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardTodayOrders"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:cardCornerRadius="16dp"
+            app:cardUseCompatPadding="true">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <!-- 실제 콘텐츠 -->
+                <LinearLayout
+                    android:id="@+id/boxTodayOrdersContent"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:text="오늘 주문"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/tvTodayOrders"
+                        android:layout_marginTop="4dp"
+                        android:text="0건 / 0원"
+                        android:textSize="14sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:text="주문 모니터링으로 이동"
+                        android:textSize="12sp"
+                        android:layout_marginTop="8dp"
+                        android:alpha="0.7"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+                <!-- 로딩 인디케이터 (콘텐츠 위에 겹침) -->
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/progTodayOrders"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:visibility="gone"/>
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 승인 대기 신청서 -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardPendingRegs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardUseCompatPadding="true">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <!-- 실제 콘텐츠 -->
+                <LinearLayout
+                    android:id="@+id/boxPendingRegsContent"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:text="승인 대기 신청서"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/tvPendingRegs"
+                        android:layout_marginTop="4dp"
+                        android:text="0건"
+                        android:textSize="14sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:text="신청서 탭으로 이동"
+                        android:textSize="12sp"
+                        android:layout_marginTop="8dp"
+                        android:alpha="0.7"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+                <!-- 로딩 인디케이터 (콘텐츠 위에 겹침) -->
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/progPendingRegs"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:visibility="gone"/>
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 진행 중 주문 -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardActiveOrders"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="16dp"
+            app:cardUseCompatPadding="true">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <!-- 실제 콘텐츠 -->
+                <LinearLayout
+                    android:id="@+id/boxActiveOrdersContent"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:text="진행 중 주문"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/tvActiveOrders"
+                        android:layout_marginTop="4dp"
+                        android:text="0건"
+                        android:textSize="14sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:text="주문 모니터링으로 이동"
+                        android:textSize="12sp"
+                        android:layout_marginTop="8dp"
+                        android:alpha="0.7"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+                <!-- 로딩 인디케이터 (콘텐츠 위에 겹침) -->
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/progActiveOrders"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:visibility="gone"/>
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+</ScrollView>

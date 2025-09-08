@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HQ 전용 하단 네비게이션 메뉴 -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 1) 본사 홈: 대시보드 카드(요약/바로가기) -->
+    <item
+        android:id="@+id/nav_hq_home"
+        android:title="홈"
+        android:icon="@drawable/ic_home_24" />
+
+    <!-- 2) 신청서: 승인/반려/되돌리기(이미 구현됨) -->
+    <item
+        android:id="@+id/nav_registrations"
+        android:title="신청서"
+        android:icon="@drawable/ic_form_24" />
+
+    <!-- 3) 주문 확인(모니터링): 실시간/필터/상세(상태 변경 메뉴 연결) -->
+    <item
+        android:id="@+id/nav_monitoring"
+        android:title="주문 확인"
+        android:icon="@drawable/ic_monitor_24" />
+
+    <!-- 4) 설정: 계정/버전/디버그 토글 -->
+    <item
+        android:id="@+id/nav_settings"
+        android:title="설정"
+        android:icon="@drawable/ic_settings_24" />
+</menu>

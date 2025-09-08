@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 필요한 것만 임시로 노출: APPROVE/REJECT/SHIP/DELIVER -->
+    <item
+        android:id="@+id/action_approve"
+        android:title="승인" />
+    <item
+        android:id="@+id/action_reject"
+        android:title="반려" />
+    <item
+        android:id="@+id/action_ship"
+        android:title="출고" />
+    <item
+        android:id="@+id/action_deliver"
+        android:title="배송완료" />
+</menu>

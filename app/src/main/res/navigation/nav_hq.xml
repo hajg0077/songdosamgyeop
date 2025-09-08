@@ -1,26 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- HQ 전용 네비게이션 그래프: 각 탭의 루트 프래그먼트를 연결 -->
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_hq"
-    app:startDestination="@id/hqHomeFragment">
+    app:startDestination="@id/nav_hq_home">
 
+    <!-- 1) 본사 홈 -->
     <fragment
-        android:id="@+id/hqHomeFragment"
+        android:id="@+id/nav_hq_home"
         android:name="com.songdosamgyeop.order.ui.hq.home.HqHomeFragment"
-        android:label="본사 홈" />
+        android:label="홈" />
 
+    <!-- 2) 신청서 목록 (이미 구현된 화면) -->
     <fragment
-        android:id="@+id/hqRegistrationListFragment"
+        android:id="@+id/nav_registrations"
         android:name="com.songdosamgyeop.order.ui.hq.registrationlist.HqRegistrationListFragment"
         android:label="신청서" />
 
+    <!-- 3) 주문 확인(모니터링) 루트: HQ 주문 목록 화면을 루트로 사용 -->
     <fragment
-        android:id="@+id/hqOrdersFragment"
+        android:id="@+id/nav_monitoring"
         android:name="com.songdosamgyeop.order.ui.hq.orders.HqOrdersFragment"
-        android:label="주문 모니터링" />
+        android:label="주문 확인" />
 
+    <!-- 4) 설정 -->
     <fragment
-        android:id="@+id/hqSettingsFragment"
+        android:id="@+id/nav_settings"
         android:name="com.songdosamgyeop.order.ui.hq.settings.HqSettingsFragment"
         android:label="설정" />
 </navigation>

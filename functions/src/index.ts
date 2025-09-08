@@ -131,3 +131,61 @@ export const hqResetRegistration = functions
     });
     return { message: "reset to PENDING" };
   });
+
+
+export const hqUpdateOrderStatus = functions
+  .region(region)
+  .https.onCall(async (data, context) => {
+    assertHQ(context);
+    const orderId = String(data.orderId || "");
+    const next = String(data.nextStatus || "");
+    if (!orderId || !next) {
+      throw new functions.https.HttpsError("invalid-argument", "orderId, nextStatus required");
+    }
+
+    const allowed = new Set(["PENDING","APPROVED","REJECTED","SHIPPED","DELIVERED"]);
+    if (!allowed.has(next)) {
+      throw new functions.https.HttpsError("invalid-argument", "invalid status");
+    }
+
+    const canTransit = (from: string, to: string) => {
+      const F = (from || "PENDING").toUpperCase();
+      const T = to.toUpperCase();
+      if (F === "PENDING")  return T === "APPROVED" || T === "REJECTED";
+      if (F === "APPROVED") return T === "SHIPPED";
+      if (F === "SHIPPED")  return T === "DELIVERED";
+      return false;
+    };
+
+    const ref = db.collection("orders").doc(orderId);
+    return await db.runTransaction(async tx => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) {
+        throw new functions.https.HttpsError("not-found", "order not found");
+      }
+      const order = snap.data()!;
+      const prev = (order.status || "PENDING").toString().toUpperCase();
+
+      if (!canTransit(prev, next)) {
+        throw new functions.https.HttpsError(
+          "failed-precondition",
+          `transition not allowed: ${prev} → ${next}`
+        );
+      }
+
+      const now = admin.firestore.FieldValue.serverTimestamp();
+      tx.update(ref, {
+        status: next,
+        updatedAt: now,
+        updatedBy: context.auth!.uid,
+        statusHistory: admin.firestore.FieldValue.arrayUnion({
+          at: now,
+          by: context.auth!.uid,
+          from: prev,
+          to: next
+        })
+      });
+
+      return { ok: true, message: "status updated", from: prev, to: next };
+    });
+  });

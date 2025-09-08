@@ -4,6 +4,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.functions.FirebaseFunctions
 import com.songdosamgyeop.order.Env
+import com.songdosamgyeop.order.data.remote.HqFunctionsDataSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,6 +25,10 @@ object FirebaseModule {
 
     @Provides @Singleton
     fun provideFunctions(): FirebaseFunctions =
-        if (Env.FUNCTIONS_ENABLED) FirebaseFunctions.getInstance(Env.FUNCTIONS_REGION)
-        else FirebaseFunctions.getInstance() // 호출 자체는 VM에서 막음
+        FirebaseFunctions.getInstance(Env.FUNCTIONS_REGION)
+
+    @Provides @Singleton
+    fun provideHqFunctionsDS(
+        functions: FirebaseFunctions
+    ): HqFunctionsDataSource = HqFunctionsDataSource(functions, Env.FUNCTIONS_ENABLED)
 }

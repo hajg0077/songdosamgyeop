@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/hq_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 네비게이션 호스트 -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/hq_nav_host"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:navGraph="@navigation/nav_hq"
+        app:defaultNavHost="true" />
+
+    <!-- 하단 네비 -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:menu="@menu/menu_bottom_hq" />
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

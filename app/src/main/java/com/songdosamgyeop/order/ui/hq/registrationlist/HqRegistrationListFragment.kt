@@ -24,6 +24,9 @@ import com.songdosamgyeop.order.ui.common.SpacingItemDecoration
 
 @AndroidEntryPoint
 class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_list) {
+    companion object {
+        private const val KEY_INIT_FILTER = "KEY_INIT_FILTER"
+    }
     private val vm: HqRegistrationListViewModel by viewModels()
     private val actionsVm: HqRegistrationActionsViewModel by viewModels()
 
@@ -66,7 +69,7 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
             override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder) = false
 
             override fun onSwiped(holder: RecyclerView.ViewHolder, direction: Int) {
-                val pos = holder.adapterPosition // ✅ bindingAdapterPosition → absoluteAdapterPosition
+                val pos = holder.adapterPosition
                 if (pos == RecyclerView.NO_POSITION) return
                 val item = adapter.currentList.getOrNull(pos)
                 if (item == null) { adapter.notifyItemChanged(pos); return }
@@ -79,8 +82,8 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                     showUndoSnackbar(b, "승인 처리됨")
                 } else {
                     showRejectDialog { reason ->
-                        if (reason == null) {
-                            adapter.notifyItemChanged(pos)
+                        if (reason.isNullOrBlank()) {
+                            adapter.notifyItemChanged(pos) // ← 취소 시 복구
                         } else {
                             lastAction = LastAction(docId, ActionType.REJECT)
                             actionsVm.reject(docId, reason)
@@ -156,6 +159,20 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         b.recycler.addItemDecoration(
             SpacingItemDecoration(resources.getDimensionPixelSize(R.dimen.list_item_space))
         )
+
+        val handleFromHome = findNavController().previousBackStackEntry?.savedStateHandle
+        handleFromHome?.getLiveData<Bundle>(KEY_INIT_FILTER)
+            ?.observe(viewLifecycleOwner) { payload ->
+                val screen = payload.getString("screen")
+                if (screen == "registrations") {
+                    val status = payload.getString("status") // "PENDING" 등
+                    // vm.setStatus(RegistrationStatus.PENDING) 형태라면 변환 필요
+                    if (status != null) vm.setStatus(
+                        com.songdosamgyeop.order.core.model.RegistrationStatus.valueOf(status)
+                    )
+                }
+                handleFromHome.remove<Bundle>(KEY_INIT_FILTER)
+            }
     }
 
     private fun removeFromList(docId: String) {
@@ -168,10 +185,7 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         Snackbar.make(b.root, msg, Snackbar.LENGTH_LONG)
             .setAction("되돌리기") {
                 val a = lastAction ?: return@setAction
-                when (a.type) {
-                    ActionType.APPROVE -> actionsVm.reject(a.docId, "Undo via UI")
-                    ActionType.REJECT -> actionsVm.approve(a.docId)
-                }
+                actionsVm.reset(a.docId)
                 // 임시 복구: 최신 상태 재적용
                 vm.list.value?.let { current -> adapter.submitList(current) } // ✅ pendingList → list
             }

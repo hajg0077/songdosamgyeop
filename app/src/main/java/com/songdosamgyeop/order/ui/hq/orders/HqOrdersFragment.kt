@@ -1,5 +1,6 @@
 package com.songdosamgyeop.order.ui.hq.orders
 
+import HqOrdersViewModel
 import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
@@ -35,7 +36,9 @@ import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
-
+    companion object {
+        private const val KEY_ORDER_UPDATED = "KEY_ORDER_UPDATED" // 상세→목록 변경 신호 키
+    }
     private val vm: HqOrdersViewModel by viewModels()
     private lateinit var b: FragmentHqOrdersBinding
     private lateinit var adapter: HqOrdersAdapter
@@ -121,6 +124,20 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
             adapter.submitList(rows)
             b.tvEmpty.visibility = if (rows.isNullOrEmpty()) View.VISIBLE else View.GONE
         }
+
+        // ✅ 상세에서 돌아올 때 "업데이트됨" 신호 수신 → 목록 재조회
+        val navController = findNavController()
+        val handle = navController.currentBackStackEntry?.savedStateHandle
+        handle?.getLiveData<Boolean>(KEY_ORDER_UPDATED)
+            ?.observe(viewLifecycleOwner) { changed ->
+                if (changed == true) {
+                    // 네 ViewModel의 재조회 메서드로 교체. 없으면 간단 wrapper 하나 만들어도 OK.
+                    vm.refresh()
+
+                    // 소비 후 제거(중복 호출 방지)
+                    handle.remove<Boolean>(KEY_ORDER_UPDATED)
+                }
+            }
     }
 
     /** 현재 어댑터 리스트를 CSV로 저장 */

@@ -22,11 +22,23 @@ class HqRegistrationListViewModel @Inject constructor(
     private val repo: RegistrationRepository
 ) : ViewModel() {
 
-    /** 선택된 상태 (기본: PENDING) */
-    private val status = MutableStateFlow(RegistrationStatus.PENDING)
+    private companion object {
+        const val K_STATUS = "regs.status"
+        const val K_QUERY  = "regs.query"
+    }
+    private val status = MutableStateFlow(
+        saved.get<String>(K_STATUS) ?: RegistrationStatus.PENDING.name
+    )
+    private val query = MutableStateFlow(saved.get<String?>(K_QUERY))
 
-    /** 검색어 (사용자 입력) */
-    private val query = MutableStateFlow("")
+    fun setStatus(s: RegistrationStatus) {
+        status.value = s.name
+        saved[K_STATUS] = s.name
+    }
+    fun setQuery(q: String?) {
+        query.value = q
+        saved[K_QUERY] = q
+    }
 
     /** 외부에서 구독할 목록 LiveData (Pair<docId, Registration>) */
     @OptIn(FlowPreview::class)
@@ -36,10 +48,4 @@ class HqRegistrationListViewModel @Inject constructor(
     ) { st, q -> st to q.trim() }
         .flatMapLatest { (st, q) -> repo.subscribeList(st, q.ifBlank { null }) }
         .asLiveData(viewModelScope.coroutineContext)
-
-    /** 상태 변경 */
-    fun setStatus(newStatus: RegistrationStatus) { status.value = newStatus }
-
-    /** 검색어 변경 */
-    fun setQuery(text: String) { query.value = text }
 }
