@@ -33,6 +33,7 @@ import java.util.TimeZone
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.NumberFormat
 
 @AndroidEntryPoint
 class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
@@ -122,7 +123,19 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
         // 리스트 구독
         vm.displayList.observe(viewLifecycleOwner) { rows ->
             adapter.submitList(rows)
+
+            // 빈/표시 여부
             b.tvEmpty.visibility = if (rows.isNullOrEmpty()) View.VISIBLE else View.GONE
+
+            // 합계 푸터 업데이트
+            if (rows.isNullOrEmpty()) {
+                b.tvFooter.visibility = View.GONE
+            } else {
+                val totalCount = rows.size
+                val totalAmount = rows.sumOf { it.totalAmount ?: 0L }
+                b.tvFooter.text = "합계: ${totalCount}건 / ${NumberFormat.getNumberInstance().format(totalAmount)}원"
+                b.tvFooter.visibility = View.VISIBLE
+            }
         }
 
         // ✅ 상세에서 돌아올 때 "업데이트됨" 신호 수신 → 목록 재조회
@@ -138,6 +151,22 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
                     handle.remove<Boolean>(KEY_ORDER_UPDATED)
                 }
             }
+
+        // 홈 → 초기 필터 신호 수신 (screen="orders", status="PENDING|APPROVED|...")
+        val fromHome = findNavController().previousBackStackEntry?.savedStateHandle
+        fromHome?.getLiveData<Bundle>(KEY_INIT_FILTER)
+            ?.observe(viewLifecycleOwner) { payload ->
+                if (payload.getString("screen") == "orders") {
+                    payload.getString("status")?.let { vm.setStatus(it) }
+                }
+                // 소비 후 제거(중복 방지)
+                fromHome.remove<Bundle>(KEY_INIT_FILTER)
+            }
+
+        b.swipe.setOnRefreshListener {
+            vm.refresh()
+            b.swipe.isRefreshing = false // 즉시 끄거나, 로딩 관찰해서 끄기
+        }
     }
 
     /** 현재 어댑터 리스트를 CSV로 저장 */

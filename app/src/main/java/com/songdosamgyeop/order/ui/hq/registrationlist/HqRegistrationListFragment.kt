@@ -21,6 +21,8 @@ import com.songdosamgyeop.order.databinding.FragmentHqRegistrationListBinding
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.core.graphics.drawable.toDrawable
 import com.songdosamgyeop.order.ui.common.SpacingItemDecoration
+import com.songdosamgyeop.order.ui.common.showError
+import com.songdosamgyeop.order.ui.common.showInfo
 
 @AndroidEntryPoint
 class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_list) {
@@ -137,13 +139,12 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
 
         // 결과 알림
         actionsVm.message.observe(viewLifecycleOwner) { res ->
-            res.onSuccess {
-                Snackbar.make(b.root, it, Snackbar.LENGTH_SHORT).show()
-            }.onFailure {
-                // 서버 실패 → 목록 복구
-                vm.list.value?.let { current -> adapter.submitList(current) } // ✅ pendingList → list
-                Snackbar.make(b.root, it.message ?: "처리에 실패했습니다.", Snackbar.LENGTH_LONG).show()
-            }
+            res.onSuccess { b.root.showInfo(it) }
+                .onFailure {
+                    // 서버 실패 → 목록 복구
+                    vm.list.value?.let { current -> adapter.submitList(current) }
+                    b.root.showError(it)
+                }
         }
 
         // 검색창 연결
@@ -160,18 +161,15 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
             SpacingItemDecoration(resources.getDimensionPixelSize(R.dimen.list_item_space))
         )
 
-        val handleFromHome = findNavController().previousBackStackEntry?.savedStateHandle
-        handleFromHome?.getLiveData<Bundle>(KEY_INIT_FILTER)
+        val fromHome = findNavController().previousBackStackEntry?.savedStateHandle
+        fromHome?.getLiveData<Bundle>(KEY_INIT_FILTER)
             ?.observe(viewLifecycleOwner) { payload ->
-                val screen = payload.getString("screen")
-                if (screen == "registrations") {
-                    val status = payload.getString("status") // "PENDING" 등
-                    // vm.setStatus(RegistrationStatus.PENDING) 형태라면 변환 필요
-                    if (status != null) vm.setStatus(
-                        com.songdosamgyeop.order.core.model.RegistrationStatus.valueOf(status)
-                    )
+                if (payload.getString("screen") == "registrations") {
+                    payload.getString("status")?.let { statusStr ->
+                        vm.setStatus(com.songdosamgyeop.order.core.model.RegistrationStatus.valueOf(statusStr))
+                    }
                 }
-                handleFromHome.remove<Bundle>(KEY_INIT_FILTER)
+                fromHome.remove<Bundle>(KEY_INIT_FILTER)
             }
     }
 

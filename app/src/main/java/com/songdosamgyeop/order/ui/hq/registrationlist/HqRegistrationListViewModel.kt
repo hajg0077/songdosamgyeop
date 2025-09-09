@@ -26,13 +26,14 @@ class HqRegistrationListViewModel @Inject constructor(
         const val K_STATUS = "regs.status"
         const val K_QUERY  = "regs.query"
     }
-    private val status = MutableStateFlow(
-        saved.get<String>(K_STATUS) ?: RegistrationStatus.PENDING.name
-    )
-    private val query = MutableStateFlow(saved.get<String?>(K_QUERY))
 
+    private val status = MutableStateFlow(
+        saved.get<String>(K_STATUS)?.let { RegistrationStatus.valueOf(it) }
+            ?: RegistrationStatus.PENDING
+    )
+    private val query  = MutableStateFlow(saved.get<String?>(K_QUERY))
     fun setStatus(s: RegistrationStatus) {
-        status.value = s.name
+        status.value = s
         saved[K_STATUS] = s.name
     }
     fun setQuery(q: String?) {
@@ -40,6 +41,11 @@ class HqRegistrationListViewModel @Inject constructor(
         saved[K_QUERY] = q
     }
 
+    /** 당겨서 새로고침 등 강제 재시작용 */
+    fun refresh() {
+        status.value = status.value
+        query.value = query.value
+    }
     /** 외부에서 구독할 목록 LiveData (Pair<docId, Registration>) */
     @OptIn(FlowPreview::class)
     val list = combine(

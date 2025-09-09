@@ -1,4 +1,4 @@
-package com.songdosamgyeop.order.ui.hq.orders
+package com.songdosamgyeop.order.ui.hq.registrationlist
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlin.collections.get
 
 @HiltViewModel
 class HqOrderActionsViewModel @Inject constructor(

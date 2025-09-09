@@ -6,11 +6,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.chip.Chip
-import com.google.android.material.snackbar.Snackbar
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.databinding.FragmentHqOrderDetailBinding
 import com.songdosamgyeop.order.ui.common.StatusBadge
-import com.songdosamgyeop.order.ui.hq.orders.HqOrderActionsViewModel
+import com.songdosamgyeop.order.ui.common.showError
+import com.songdosamgyeop.order.ui.common.showInfo
+import com.songdosamgyeop.order.ui.hq.registrationlist.HqOrderActionsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -56,9 +57,9 @@ class HqOrderDetailFragment : Fragment(R.layout.fragment_hq_order_detail) {
         }
 
         actionsVm.message.observe(viewLifecycleOwner) { res ->
-            val msg = res.getOrNull() ?: (res.exceptionOrNull()?.message ?: "처리에 실패했습니다.")
-            Snackbar.make(b.root, msg, Snackbar.LENGTH_SHORT).show()
-            refreshMenu()
+            res.onSuccess { b.root.showInfo(it) }
+                .onFailure { b.root.showError(it) }
+            requireActivity().invalidateOptionsMenu()
         }
         actionsVm.busy.observe(viewLifecycleOwner) { refreshMenu() }
 

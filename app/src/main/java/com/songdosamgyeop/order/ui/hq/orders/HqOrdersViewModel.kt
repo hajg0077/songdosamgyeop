@@ -1,6 +1,7 @@
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
+import com.google.firebase.Timestamp
 import com.songdosamgyeop.order.data.repo.HqOrdersRepository
 import com.songdosamgyeop.order.ui.hq.orders.OrderDisplayRow
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -10,7 +11,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import java.security.Timestamp
 import javax.inject.Inject
 
 @HiltViewModel
@@ -26,9 +26,9 @@ class HqOrdersViewModel @Inject constructor(
         const val K_TO     = "orders.to"
     }
     private val status = MutableStateFlow(saved.get<String>(K_STATUS) ?: "PLACED")
-    private val branchNameQuery = MutableStateFlow<String?>(saved.get<String?>(K_BRANCH))
-    private val from = MutableStateFlow<Timestamp?>(saved.get<Timestamp?>(K_FROM))
-    private val to   = MutableStateFlow<Timestamp?>(saved.get<Timestamp?>(K_TO))
+    private val branchNameQuery = MutableStateFlow<String?>(saved[K_BRANCH])
+    private val from = MutableStateFlow<Timestamp?>(saved[K_FROM])
+    private val to   = MutableStateFlow<Timestamp?>(saved[K_TO])
 
 
     data class Params(
@@ -55,8 +55,8 @@ class HqOrdersViewModel @Inject constructor(
         repo.subscribeOrders(
             status = p.status,
             branchNamePrefix = p.branchNamePrefix,
-            from = p.from as com.google.firebase.Timestamp?,
-            to = p.to as com.google.firebase.Timestamp?
+            from = p.from,
+            to = p.to
         )
     }.map { rows -> rows.map { OrderDisplayRow.from(it) } }
         .asLiveData()
