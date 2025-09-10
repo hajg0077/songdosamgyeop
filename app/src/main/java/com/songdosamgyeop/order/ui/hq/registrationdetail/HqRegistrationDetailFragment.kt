@@ -12,6 +12,8 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.databinding.FragmentHqRegistrationDetailBinding
+import com.songdosamgyeop.order.ui.common.showError
+import com.songdosamgyeop.order.ui.common.showInfo
 import com.songdosamgyeop.order.ui.hq.registrationlist.HqRegistrationActionsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -82,14 +84,10 @@ class HqRegistrationDetailFragment
         }
 
         // 처리 결과
-        actionsVm.message.observe(viewLifecycleOwner) { result ->
-            result.onSuccess {
-                Snackbar.make(b.root, it, Snackbar.LENGTH_SHORT).show()
-                findNavController().popBackStack()
-            }.onFailure { e ->
-                setButtonsEnabled(b, true)
-                Snackbar.make(b.root, e.message ?: "처리에 실패했습니다.", Snackbar.LENGTH_LONG).show()
-            }
+        actionsVm.message.observe(viewLifecycleOwner) { res ->
+            res.onSuccess { b.root.showInfo(it) }
+                .onFailure { b.root.showError(it) }
+            requireActivity().invalidateOptionsMenu()
         }
     }
 

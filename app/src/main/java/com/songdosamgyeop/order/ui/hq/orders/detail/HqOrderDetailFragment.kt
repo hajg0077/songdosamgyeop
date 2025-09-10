@@ -11,7 +11,7 @@ import com.songdosamgyeop.order.databinding.FragmentHqOrderDetailBinding
 import com.songdosamgyeop.order.ui.common.StatusBadge
 import com.songdosamgyeop.order.ui.common.showError
 import com.songdosamgyeop.order.ui.common.showInfo
-import com.songdosamgyeop.order.ui.hq.registrationlist.HqOrderActionsViewModel
+import com.songdosamgyeop.order.ui.hq.orders.HqOrderActionsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
