@@ -30,6 +30,9 @@ android {
         debug {
             // ✅ CSV 내보내기 사용 (툴바 '내보내기' 기능 ON)
             buildConfigField("boolean", "FEATURE_EXPORT", "true")
+            buildConfigField("boolean", "FUNCTIONS_ENABLED", "false")  // 스텁 또는 에뮬레이터
+            buildConfigField("boolean", "EMULATOR", "true")
+            buildConfigField("String",  "EMULATOR_HOST", "\"192.168.0.12\"") // PC IP
         }
         release {
             isMinifyEnabled = false
@@ -38,7 +41,10 @@ android {
                 "proguard-rules.pro"
             )
             // 필요 시 운영에서 켜도 됨
-            buildConfigField("boolean", "FEATURE_EXPORT", "false")
+            buildConfigField("boolean", "FEATURE_EXPORT", "true")
+            buildConfigField("boolean", "FUNCTIONS_ENABLED", "true")   // 실서버 호출
+            buildConfigField("boolean", "EMULATOR", "false")
+            buildConfigField("String",  "EMULATOR_HOST", "\"\"")
         }
     }
 
