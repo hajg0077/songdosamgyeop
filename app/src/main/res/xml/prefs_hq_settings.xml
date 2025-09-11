@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/xml/prefs_hq_settings.xml -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="앱 정보">
+        <Preference
+            android:title="버전"
+            android:summary="1.0.0 (100) · prod" />
+    </PreferenceCategory>
+</PreferenceScreen>

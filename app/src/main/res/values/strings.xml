@@ -14,7 +14,6 @@
     <string name="msg_submit_ok">신청서가 제출되었습니다. 승인 대기 화면으로 이동합니다.</string>
     <string name="msg_submit_fail">제출에 실패했습니다. 잠시 후 다시 시도하세요.</string>
 
-    <string name="badge_draft">임시저장</string>
     <string name="badge_pending">주문</string>
     <string name="badge_approved">승인</string>
     <string name="badge_rejected">거절</string>

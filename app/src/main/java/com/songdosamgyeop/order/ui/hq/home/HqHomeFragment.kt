@@ -9,6 +9,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.databinding.FragmentHqHomeBinding
+import com.songdosamgyeop.order.ui.hq.orders.HqOrdersViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import java.text.NumberFormat
@@ -122,5 +123,28 @@ class HqHomeFragment : Fragment(R.layout.fragment_hq_home) {
             bundleOf("screen" to screen, "status" to status)
         )
         findNavController().navigate(destId)
+    }
+
+    private fun openOrdersCompleted() {
+        findNavController().navigate(R.id.action_home_to_hqOrders)
+        findNavController().currentBackStackEntry?.savedStateHandle?.set(
+            "KEY_INIT_FILTER",
+            Bundle().apply {
+                putString("screen", "orders")
+                putString("tab", HqOrdersViewModel.TAB_COMPLETED) // "completed"
+            }
+        )
+    }
+
+    private fun openOrdersInProgress(branchKeyword: String? = null) {
+        findNavController().navigate(R.id.action_home_to_hqOrders)
+        findNavController().currentBackStackEntry?.savedStateHandle?.set(
+            "KEY_INIT_FILTER",
+            Bundle().apply {
+                putString("screen", "orders")
+                putString("tab", HqOrdersViewModel.TAB_IN_PROGRESS) // "inProgress"
+                branchKeyword?.let { putString("branchQuery", it) }
+            }
+        )
     }
 }

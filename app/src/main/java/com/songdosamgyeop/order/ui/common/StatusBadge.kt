@@ -9,7 +9,6 @@ import com.songdosamgyeop.order.core.model.OrderStatus
 /** 주문 상태 -> 칩 스타일 적용 (Material3 팔레트) */
 object StatusBadge {
     fun apply(chip: Chip, status: OrderStatus) {
-        val ctx = chip.context
         val (containerAttr: Int, textAttr: Int, labelRes: Int) = when (status) {
             OrderStatus.PENDING -> Triple(
                 com.google.android.material.R.attr.colorPrimaryContainer,
@@ -37,10 +36,9 @@ object StatusBadge {
                 R.string.badge_delivered
             )
         }
-
         val bg = MaterialColors.getColor(chip, containerAttr)
         val fg = MaterialColors.getColor(chip, textAttr)
-        chip.text = ctx.getString(labelRes)
+        chip.text = chip.context.getString(labelRes)
         chip.chipBackgroundColor = ColorStateList.valueOf(bg)
         chip.setTextColor(fg)
         chip.isClickable = false
@@ -48,7 +46,7 @@ object StatusBadge {
     }
 }
 
-/** 문자열 → enum 변환 후 배지 적용 */
+// 문자열 -> enum 변환 헬퍼 (어댑터에서 사용)
 fun applyOrderStatusChip(chip: Chip, status: String?) {
     val enumVal = runCatching { OrderStatus.valueOf(status?.uppercase() ?: "") }.getOrNull()
         ?: OrderStatus.PENDING

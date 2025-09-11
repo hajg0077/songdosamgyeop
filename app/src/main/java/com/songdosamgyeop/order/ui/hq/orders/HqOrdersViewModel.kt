@@ -24,10 +24,6 @@ class HqOrdersViewModel @Inject constructor(
         const val TAB_COMPLETED   = "completed"
     }
 
-    // 탭: "inProgress" | "completed"
-    private val _tab = MutableLiveData(savedStateHandle.get<String>("tab") ?: "inProgress")
-    val tab: LiveData<String> = _tab
-
     // 필터
     private val _branchQuery = MutableLiveData(savedStateHandle.get<String>("branchQuery") ?: "")
     val branchQuery: LiveData<String> = _branchQuery
@@ -47,21 +43,39 @@ class HqOrdersViewModel @Inject constructor(
     val items: LiveData<List<Map<String, Any>>> = _items
 
     // 진행/완료 상태 세트
-    private val progressing = listOf(OrderStatus.PLACED, OrderStatus.APPROVED, OrderStatus.REJECTED)
+    private val progressing = listOf(OrderStatus.PENDING, OrderStatus.APPROVED, OrderStatus.REJECTED)
     private val completed = listOf(OrderStatus.SHIPPED, OrderStatus.DELIVERED)
 
 
+    // 🔒 설정 제거: 하드코딩 기본값
+    private val defaultTab = TAB_IN_PROGRESS
+    private val includeRejectedInProgress = false
+    private val sortMode = SortMode.PLACED_AT_DESC
+
+    private val _tab = MutableLiveData(defaultTab)
+    val tab: LiveData<String> = _tab
     private val _displayList = MutableLiveData<List<OrderDisplayRow>>(emptyList())
     val displayList: LiveData<List<OrderDisplayRow>> = _displayList
 
+    // 탭별 상태 매핑 (거절 미포함)
     private fun statusesForTab(tab: String): List<OrderStatus> = when (tab) {
-        TAB_COMPLETED -> listOf(OrderStatus.DELIVERED) // 완료 탭 = DELIVERED
-        else -> listOf(
-            OrderStatus.PLACED,
-            OrderStatus.APPROVED,
-            OrderStatus.REJECTED,
-            OrderStatus.SHIPPED
-        )
+        TAB_COMPLETED -> listOf(OrderStatus.DELIVERED)
+        else -> buildList {
+            add(OrderStatus.PENDING)
+            add(OrderStatus.APPROVED)
+            add(OrderStatus.SHIPPED)
+            if (includeRejectedInProgress) add(OrderStatus.REJECTED)
+        }
+    }
+
+    // 정렬 모드 간단 enum (금액순은 나중에 필요해지면)
+    enum class SortMode { PLACED_AT_DESC /*, TOTAL_AMOUNT_DESC*/ }
+
+    // 🔎 쿼리 정렬(기본: placedAt DESC)
+    private fun applySort(qBase: com.google.firebase.firestore.Query): com.google.firebase.firestore.Query {
+        return when (sortMode) {
+            SortMode.PLACED_AT_DESC -> qBase.orderBy("placedAt", Query.Direction.DESCENDING)
+        }
     }
 
     fun setTab(newTab: String) {
@@ -102,14 +116,11 @@ class HqOrdersViewModel @Inject constructor(
         val startTs = _dateStart.value
         val endTs   = _dateEnd.value
 
-        if (!branchQ.isNullOrBlank()) {
-            q = q.orderBy("branchNameLower")
-                .orderBy("placedAt", Query.Direction.DESCENDING)
-                .whereGreaterThanOrEqualTo("branchNameLower", branchQ)
-                .whereLessThan("branchNameLower", branchQ + "\uf8ff")
-        } else {
-            q = q.orderBy("placedAt", Query.Direction.DESCENDING)
-        }
+        q = applySort(q)
+
+        // 지사명 검색 있을 때 (branchNameLower 먼저, 그 다음 placedAt)
+        q = q.orderBy("branchNameLower")
+        q = q.orderBy("placedAt", Query.Direction.DESCENDING)
 
         if (startTs != null) q = q.whereGreaterThanOrEqualTo("placedAt", startTs)
         if (endTs   != null) q = q.whereLessThan("placedAt", endTs)

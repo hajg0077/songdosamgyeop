@@ -7,7 +7,10 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.NavOptions
+import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.songdosamgyeop.order.BuildConfig
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.databinding.FragmentHqSettingsBinding
@@ -18,9 +21,10 @@ import dagger.hilt.android.AndroidEntryPoint
 class HqSettingsFragment : Fragment(R.layout.fragment_hq_settings) {
 
     private val vm: HqSettingsViewModel by viewModels()
+    private lateinit var b: FragmentHqSettingsBinding
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val b = FragmentHqSettingsBinding.bind(view)
+        b = FragmentHqSettingsBinding.bind(view)
 
         // 계정/역할 라벨 바인딩
         vm.email.observe(viewLifecycleOwner) { b.tvEmail.text = it }
@@ -46,7 +50,6 @@ class HqSettingsFragment : Fragment(R.layout.fragment_hq_settings) {
                 putExtra(Intent.EXTRA_SUBJECT, "[송도삼겹 HQ] 앱 피드백")
                 putExtra(Intent.EXTRA_TEXT, body)
             }
-            // 메일 클라이언트만 뜨도록
             if (intent.resolveActivity(requireContext().packageManager) != null) {
                 startActivity(intent)
             } else {
@@ -57,7 +60,7 @@ class HqSettingsFragment : Fragment(R.layout.fragment_hq_settings) {
             }
         }
 
-        // 로그아웃 확인 다이얼로그
+        // 로그아웃 버튼
         b.btnLogout.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle("로그아웃")
@@ -66,5 +69,35 @@ class HqSettingsFragment : Fragment(R.layout.fragment_hq_settings) {
                 .setPositiveButton("로그아웃") { _, _ -> vm.logout() }
                 .show()
         }
+
+        // 로그아웃 상태 구독
+        vm.logoutState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is LogoutState.Idle -> Unit
+                is LogoutState.Loading -> {
+                    b.btnLogout.isEnabled = false
+                    b.progress.visibility = View.VISIBLE
+                }
+                is LogoutState.Success -> {
+                    b.progress.visibility = View.GONE
+                    navigateToAuthAndClearBackstack()
+                }
+                is LogoutState.Error -> {
+                    b.progress.visibility = View.GONE
+                    b.btnLogout.isEnabled = true
+                    Snackbar.make(b.root, state.message ?: "로그아웃 실패", Snackbar.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    private fun navigateToAuthAndClearBackstack() {
+        val nav = findNavController()
+        // TODO: 아래 destination을 실제 로그인/인증 시작지점으로 교체하세요 (예: R.id.authFragment or R.id.auth_graph)
+        val dest = R.id.authFragment
+        val opts = NavOptions.Builder()
+            .setPopUpTo(nav.graph.id, true) // 전체 백스택 제거
+            .build()
+        nav.navigate(dest, null, opts)
     }
 }
