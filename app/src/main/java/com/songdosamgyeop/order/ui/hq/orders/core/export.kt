@@ -1,54 +1,54 @@
-package com.songdosamgyeop.order.core.export
+package com.songdosamgyeop.order.ui.hq.orders.core
 
-import com.songdosamgyeop.order.ui.hq.orders.OrderDisplayRow
-import java.text.NumberFormat
+import android.content.ContentResolver
+import android.net.Uri
+import java.io.OutputStreamWriter
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
-/**
- * HQ 주문 모니터링 CSV 생성기.
- * - 컬럼: orderId, branch, status, when, itemsCount, totalAmountKRW
- * - Excel 호환을 위해 Fragment 쪽에서 UTF-8 BOM을 함께 기록하는 것을 권장.
- */
-object OrdersCsvExporter {
+object CsvExporter {
 
-    /** 리스트를 CSV 문자열로 직렬화 */
-    fun buildCsv(
-        rows: List<OrderDisplayRow>,
-        locale: Locale = Locale.KOREA
-    ): String {
-        val nf = NumberFormat.getNumberInstance(locale)
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", locale)
+    /** UTF-8 BOM 포함, 한국 엑셀 호환 */
+    fun exportOrders(
+        resolver: ContentResolver,
+        uri: Uri,
+        rows: List<com.songdosamgyeop.order.ui.hq.orders.OrderDisplayRow>
+    ) {
+        resolver.openOutputStream(uri)?.use { os ->
+            // BOM
+            os.write(0xEF); os.write(0xBB); os.write(0xBF)
 
-        val header = listOf(
-            "orderId", "branch", "status", "when", "itemsCount", "totalAmountKRW"
-        ).joinToString(",")
+            OutputStreamWriter(os, Charsets.UTF_8).use { w ->
+                w.appendLine("주문일시,브랜드,지사,상태,상품개수,합계,주문ID")
+                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.KOREA)
+                    .apply { timeZone = TimeZone.getTimeZone("Asia/Seoul") }
 
-        val body = rows.joinToString("\n") { r ->
-            val whenStr = r.placedAtMs?.let { sdf.format(Date(it)) }
-                ?: r.createdAtMs?.let { sdf.format(Date(it)) } ?: ""
-            listOf(
-                esc(r.id),
-                esc(r.branchLabel),
-                esc(r.status),
-                esc(whenStr),
-                r.itemsCount?.toString() ?: "",
-                r.totalAmount?.let { nf.format(it) } ?: ""
-            ).joinToString(",")
-        }
+                rows.forEach { r ->
+                    val whenStr = r.placedAt?.let(sdf::format)
+                        ?: r.createdAt?.let(sdf::format) ?: "-"
 
-        return buildString {
-            append(header).append('\n')
-            if (body.isNotEmpty()) append(body).append('\n')
-        }
+                    val brand  = r.brandId ?: "-"
+                    val branch = r.branchName ?: r.branchId ?: "-"
+                    val status = r.status ?: "-"
+                    val count  = r.itemsCount?.toString() ?: "-"
+                    val total  = r.totalAmount?.toString() ?: "-"
+                    val id     = r.id
+
+                    w.appendLine(listOf(whenStr, brand, branch, status, count, total, id).joinToCsv())
+                }
+            }
+        } ?: error("OutputStream is null")
     }
 
-    /** CSV 안전 이스케이프(따옴표/콤마/개행 처리) */
-    private fun esc(raw: String): String {
-        if (raw.isEmpty()) return ""
-        val needsQuote = raw.any { it == ',' || it == '"' || it == '\n' || it == '\r' }
-        val doubled = raw.replace("\"", "\"\"")
-        return if (needsQuote) "\"$doubled\"" else doubled
+    private fun List<String>.joinToCsv(): String = buildString {
+        this@joinToCsv.forEachIndexed { i, raw ->
+            if (i > 0) append(',')
+            append(raw.escapeCsv())
+        }
+    }
+    private fun String.escapeCsv(): String {
+        val needsQuote = contains(',') || contains('"') || contains('\n') || contains('\r')
+        val s = replace("\"", "\"\"")
+        return if (needsQuote) "\"$s\"" else s
     }
 }

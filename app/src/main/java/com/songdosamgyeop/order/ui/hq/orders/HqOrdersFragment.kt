@@ -1,11 +1,8 @@
 package com.songdosamgyeop.order.ui.hq.orders
 
-import HqOrdersViewModel
 import android.net.Uri
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
+import android.view.*
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
@@ -20,11 +17,13 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.tabs.TabLayout
 import com.google.firebase.Timestamp
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.databinding.FragmentHqOrdersBinding
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.OutputStreamWriter
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -33,13 +32,15 @@ import java.util.TimeZone
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.NumberFormat
 
 @AndroidEntryPoint
 class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
+
     companion object {
         private const val KEY_ORDER_UPDATED = "KEY_ORDER_UPDATED" // 상세→목록 변경 신호 키
+        private const val KEY_INIT_FILTER   = "KEY_INIT_FILTER"   // 홈→초기 필터 전달 키
     }
+
     private val vm: HqOrdersViewModel by viewModels()
     private lateinit var b: FragmentHqOrdersBinding
     private lateinit var adapter: HqOrdersAdapter
@@ -55,9 +56,9 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         b = FragmentHqOrdersBinding.bind(view)
 
-        val nav = findNavController()
+        // RecyclerView
         adapter = HqOrdersAdapter { orderId ->
-            nav.navigate(
+            findNavController().navigate(
                 R.id.action_hqOrders_to_hqOrderDetail,
                 bundleOf("orderId" to orderId)
             )
@@ -65,16 +66,39 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
         b.recycler.layoutManager = LinearLayoutManager(requireContext())
         b.recycler.adapter = adapter
 
-        // 상태 칩
-        b.chipPlaced.setOnClickListener { vm.setStatus("PLACED") }
-        b.chipDraft.setOnClickListener  { vm.setStatus("DRAFT") }   // 향후 대비
+        // ── 탭 분리: 진행 중 / 완료 ───────────────────────────────────────
+        // TabLayout이 레이아웃에 존재한다고 가정 (없다면 TabLayout 추가 필요)
+        b.tabLayout.apply {
+            if (tabCount == 0) {
+                addTab(newTab().setText("진행 중").setTag("inProgress"))
+                addTab(newTab().setText("완료").setTag("completed"))
+            }
+            addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: TabLayout.Tab) {
+                    (tab.tag as? String)?.let(vm::setTab) // "inProgress" | "completed"
+                }
+                override fun onTabUnselected(tab: TabLayout.Tab) {}
+                override fun onTabReselected(tab: TabLayout.Tab) {
+                    // 탭 재선택 시 새로고침 UX
+                    vm.refresh()
+                }
+            })
+        }
 
-        // 지사명 검색
+        // ViewModel의 현재 탭 상태를 UI에 반영 (SavedStateHandle로 초기화될 수 있음)
+        vm.tab.observe(viewLifecycleOwner) { t ->
+            val idx = if (t == "completed") 1 else 0
+            if (b.tabLayout.selectedTabPosition != idx) {
+                b.tabLayout.getTabAt(idx)?.select()
+            }
+        }
+
+        // ── 지사명 검색 ─────────────────────────────────────────────────
         b.etBranchName.doOnTextChanged { text, _, _, _ ->
             vm.setBranchNameQuery(text?.toString())
         }
 
-        // 기간 선택
+        // ── 기간 선택 (endExclusive: 다음날 00:00) ──────────────────────
         b.btnPickDate.setOnClickListener {
             val picker = MaterialDatePicker.Builder.dateRangePicker()
                 .setTitleText("조회 기간 선택")
@@ -83,7 +107,6 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
                 val start = range.first ?: return@addOnPositiveButtonClickListener
                 val end   = range.second ?: return@addOnPositiveButtonClickListener
 
-                // endExclusive = 종료일 다음날 00:00 (UTC)
                 val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
                     timeInMillis = end
                     add(Calendar.DAY_OF_YEAR, 1)
@@ -96,18 +119,22 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
                     Timestamp(Date(start)),
                     Timestamp(Date(cal.timeInMillis))
                 )
+                b.btnPickDate.text = picker.headerText
             }
             picker.show(parentFragmentManager, "hqDateRange")
         }
-        b.btnClearDate.setOnClickListener { vm.setDateRange(null, null) }
+        b.btnClearDate.setOnClickListener {
+            vm.setDateRange(null, null)
+            b.btnPickDate.setText(R.string.common_select_date_range)
+        }
 
-        // 메뉴 (CSV 내보내기)
+        // ── 메뉴 (CSV 내보내기) ────────────────────────────────────────
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
-            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-                menuInflater.inflate(R.menu.menu_hq_orders, menu)
+            override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
+                inflater.inflate(R.menu.menu_hq_orders, menu)
             }
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                return when (menuItem.itemId) {
+            override fun onMenuItemSelected(item: MenuItem): Boolean {
+                return when (item.itemId) {
                     R.id.action_export_csv -> {
                         val ts = SimpleDateFormat("yyyyMMdd_HHmm", Locale.KOREA)
                             .apply { timeZone = TimeZone.getTimeZone("Asia/Seoul") }
@@ -120,58 +147,58 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
             }
         }, viewLifecycleOwner, Lifecycle.State.STARTED)
 
-        // 리스트 구독
+        // ── 리스트 구독 + 합계 푸터 ─────────────────────────────────────
         vm.displayList.observe(viewLifecycleOwner) { rows ->
             adapter.submitList(rows)
-
-            // 빈/표시 여부
             b.tvEmpty.visibility = if (rows.isNullOrEmpty()) View.VISIBLE else View.GONE
 
-            // 합계 푸터 업데이트
             if (rows.isNullOrEmpty()) {
                 b.tvFooter.visibility = View.GONE
             } else {
                 val totalCount = rows.size
                 val totalAmount = rows.sumOf { it.totalAmount ?: 0L }
-                b.tvFooter.text = "합계: ${totalCount}건 / ${NumberFormat.getNumberInstance().format(totalAmount)}원"
+                val nf = NumberFormat.getNumberInstance(Locale.KOREA)
+                b.tvFooter.text = "합계: ${totalCount}건 / ${nf.format(totalAmount)}원"
                 b.tvFooter.visibility = View.VISIBLE
             }
         }
 
-        // ✅ 상세에서 돌아올 때 "업데이트됨" 신호 수신 → 목록 재조회
-        val navController = findNavController()
-        val handle = navController.currentBackStackEntry?.savedStateHandle
+        // ✅ 상세→목록 복귀 시 변경 신호 수신 → 재조회
+        val handle = findNavController().currentBackStackEntry?.savedStateHandle
         handle?.getLiveData<Boolean>(KEY_ORDER_UPDATED)
             ?.observe(viewLifecycleOwner) { changed ->
                 if (changed == true) {
-                    // 네 ViewModel의 재조회 메서드로 교체. 없으면 간단 wrapper 하나 만들어도 OK.
                     vm.refresh()
-
-                    // 소비 후 제거(중복 호출 방지)
                     handle.remove<Boolean>(KEY_ORDER_UPDATED)
                 }
             }
 
-        // 홈 → 초기 필터 신호 수신 (screen="orders", status="PENDING|APPROVED|...")
+        // ✅ 홈→초기 필터(탭/상태/기간 등) 수신
         val fromHome = findNavController().previousBackStackEntry?.savedStateHandle
         fromHome?.getLiveData<Bundle>(KEY_INIT_FILTER)
             ?.observe(viewLifecycleOwner) { payload ->
                 if (payload.getString("screen") == "orders") {
-                    payload.getString("status")?.let { vm.setStatus(it) }
+                    payload.getString("tab")?.let(vm::setTab) // "inProgress"|"completed"
+                    payload.getString("branchQuery")?.let(vm::setBranchNameQuery)
+                    @Suppress("DEPRECATION")
+                    vm.setDateRange(
+                        payload.getParcelable("dateStart"),
+                        payload.getParcelable("dateEnd")
+                    )
                 }
-                // 소비 후 제거(중복 방지)
                 fromHome.remove<Bundle>(KEY_INIT_FILTER)
             }
 
+        // 당겨서 새로고침
         b.swipe.setOnRefreshListener {
             vm.refresh()
-            b.swipe.isRefreshing = false // 즉시 끄거나, 로딩 관찰해서 끄기
+            b.swipe.isRefreshing = false
         }
     }
 
     /** 현재 어댑터 리스트를 CSV로 저장 */
     private fun exportCsv(uri: Uri) {
-        val rows = adapter.currentList.toList() // ListAdapter의 immutable snapshot
+        val rows = adapter.currentList.toList()
         val resolver = requireContext().contentResolver
 
         lifecycleScope.launch(Dispatchers.IO) {
@@ -192,7 +219,8 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
                                 ?: r.createdAt?.let(sdf::format) ?: "-"
 
                             val brand  = r.brandId ?: "-"
-                            val branch = r.branchName ?: r.branchName ?: "-"
+                            // 🐞 FIX: 지사명 fallback 중복 → branchId로 보정
+                            val branch = r.branchName ?: r.branchId ?: "-"
                             val status = r.status ?: "-"
                             val count  = r.itemsCount?.toString() ?: "-"
                             val total  = r.totalAmount?.toString() ?: "-"
@@ -211,7 +239,11 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Snackbar.make(requireView(), getString(R.string.msg_export_failed, e.message ?: ""), Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(
+                        requireView(),
+                        getString(R.string.msg_export_failed, e.message ?: ""),
+                        Snackbar.LENGTH_LONG
+                    ).show()
                 }
             }
         }

@@ -15,11 +15,11 @@
     <string name="msg_submit_fail">제출에 실패했습니다. 잠시 후 다시 시도하세요.</string>
 
     <string name="badge_draft">임시저장</string>
-    <string name="badge_placed">접수</string>
-    <string name="badge_preparing">준비중</string>
-    <string name="badge_shipped">출고완료</string>
-    <string name="badge_canceled">취소</string>
-
+    <string name="badge_pending">주문</string>
+    <string name="badge_approved">승인</string>
+    <string name="badge_rejected">거절</string>
+    <string name="badge_shipped">출고 완료</string>
+    <string name="badge_delivered">완료</string>
 
     <string name="msg_order_not_found">주문을 찾을 수 없습니다.</string>
     <string name="hq_order_detail_summary">합계 %1$s · %2$s · %3$s</string>

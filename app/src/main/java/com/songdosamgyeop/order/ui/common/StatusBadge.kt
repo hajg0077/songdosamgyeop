@@ -4,47 +4,53 @@ import android.content.res.ColorStateList
 import com.google.android.material.chip.Chip
 import com.google.android.material.color.MaterialColors
 import com.songdosamgyeop.order.R
+import com.songdosamgyeop.order.core.model.OrderStatus
 
-/** 주문 상태 -> 칩 스타일 적용 */
+/** 주문 상태 -> 칩 스타일 적용 (Material3 팔레트) */
 object StatusBadge {
-    enum class OrderStatus { DRAFT, PLACED, PREPARING, SHIPPED, CANCELED }
-
     fun apply(chip: Chip, status: OrderStatus) {
         val ctx = chip.context
-        val (containerAttr, textAttr, label) = when (status) {
-            OrderStatus.DRAFT     -> Triple(
-                com.google.android.material.R.attr.colorSurfaceVariant,
-                com.google.android.material.R.attr.colorOnSurfaceVariant,
-                ctx.getString(R.string.badge_draft)
-            )
-            OrderStatus.PLACED    -> Triple(
+        val (containerAttr: Int, textAttr: Int, labelRes: Int) = when (status) {
+            OrderStatus.PENDING -> Triple(
                 com.google.android.material.R.attr.colorPrimaryContainer,
                 com.google.android.material.R.attr.colorOnPrimaryContainer,
-                ctx.getString(R.string.badge_placed)
+                R.string.badge_pending
             )
-            OrderStatus.PREPARING -> Triple(
+            OrderStatus.APPROVED -> Triple(
                 com.google.android.material.R.attr.colorSecondaryContainer,
                 com.google.android.material.R.attr.colorOnSecondaryContainer,
-                ctx.getString(R.string.badge_preparing)
+                R.string.badge_approved
             )
-            OrderStatus.SHIPPED   -> Triple(
-                com.google.android.material.R.attr.colorTertiaryContainer,
-                com.google.android.material.R.attr.colorOnTertiaryContainer,
-                ctx.getString(R.string.badge_shipped)
-            )
-            OrderStatus.CANCELED  -> Triple(
+            OrderStatus.REJECTED -> Triple(
                 com.google.android.material.R.attr.colorErrorContainer,
                 com.google.android.material.R.attr.colorOnErrorContainer,
-                ctx.getString(R.string.badge_canceled)
+                R.string.badge_rejected
+            )
+            OrderStatus.SHIPPED -> Triple(
+                com.google.android.material.R.attr.colorTertiaryContainer,
+                com.google.android.material.R.attr.colorOnTertiaryContainer,
+                R.string.badge_shipped
+            )
+            OrderStatus.DELIVERED -> Triple(
+                com.google.android.material.R.attr.colorSurfaceContainerHigh,
+                com.google.android.material.R.attr.colorOnSurface,
+                R.string.badge_delivered
             )
         }
+
         val bg = MaterialColors.getColor(chip, containerAttr)
         val fg = MaterialColors.getColor(chip, textAttr)
-
-        chip.text = label
+        chip.text = ctx.getString(labelRes)
         chip.chipBackgroundColor = ColorStateList.valueOf(bg)
         chip.setTextColor(fg)
         chip.isClickable = false
         chip.isCheckable = false
     }
+}
+
+/** 문자열 → enum 변환 후 배지 적용 */
+fun applyOrderStatusChip(chip: Chip, status: String?) {
+    val enumVal = runCatching { OrderStatus.valueOf(status?.uppercase() ?: "") }.getOrNull()
+        ?: OrderStatus.PENDING
+    StatusBadge.apply(chip, enumVal)
 }
