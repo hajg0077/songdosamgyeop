@@ -16,7 +16,16 @@
     <fragment
         android:id="@+id/branchCartFragment"
         android:name="com.songdosamgyeop.order.ui.branch.cart.BranchCartFragment"
-        android:label="장바구니" />
+        android:label="장바구니">
+        <action
+            android:id="@+id/action_branchCart_to_branchCheckout"
+            app:destination="@id/branchCheckoutFragment"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/branchCheckoutFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.checkout.BranchCheckoutFragment"
+        android:label="주문 확인" />
 
     <fragment
         android:id="@+id/branchHistoryFragment"

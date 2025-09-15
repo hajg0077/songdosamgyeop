@@ -17,7 +17,9 @@ class BranchOrdersRepository @Inject constructor(
     suspend fun createOrder(
         items: List<CartItem>,
         branchId: String,
-        branchName: String
+        branchName: String,
+        note: String?,
+        requestedAt: Timestamp?
     ): String {
         require(items.isNotEmpty()) { "장바구니가 비었습니다." }
         val uid = FirebaseAuth.getInstance().currentUser?.uid

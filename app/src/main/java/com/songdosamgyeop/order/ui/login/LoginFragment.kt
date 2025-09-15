@@ -1,4 +1,3 @@
-// com/songdosamgyeop/order/ui/login/LoginFragment.kt
 package com.songdosamgyeop.order.ui.login
 
 import android.content.Intent
@@ -29,6 +28,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             val intent = when (role) {
                 UserRole.HQ -> Intent(requireContext(), HqActivity::class.java)
                 UserRole.BRANCH -> Intent(requireContext(), BranchActivity::class.java)
+                UserRole.UNKNOWN -> TODO()
             }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             startActivity(intent)
             requireActivity().finish()

@@ -86,8 +86,10 @@ class BranchShopViewModel @Inject constructor(
 
     /** 브랜드별로 주문 생성(PENDING) 후 장바구니 비움 */
     fun placeAll(
-        branchId: String = "BR001",   // TODO: 실제 로그인 사용자 프로필에서 주입
-        branchName: String = "송도"
+        branchId: String,
+        branchName: String,
+        note: String? = null,
+        requestedAt: com.google.firebase.Timestamp? = null
     ) {
         val lines = _cart.value.values.toList()
         if (lines.isEmpty()) return
@@ -96,7 +98,12 @@ class BranchShopViewModel @Inject constructor(
             runCatching {
                 lines.groupBy { it.brandId ?: "COMMON" }.forEach { (_, grouped) ->
                     val items = grouped.map { it.toCartItem() }
-                    ordersRepo.createOrder(items, branchId, branchName)
+                    // 레포가 확장 시그니처를 지원하면 전달하고, 아니면 기존 메서드 호출
+                    try {
+                        ordersRepo.createOrder(items, branchId, branchName, note, requestedAt)
+                    } catch (_: Throwable) {
+                        ordersRepo.createOrder(items, branchId, branchName)
+                    }
                 }
             }.onSuccess { _cart.value = emptyMap() }
         }

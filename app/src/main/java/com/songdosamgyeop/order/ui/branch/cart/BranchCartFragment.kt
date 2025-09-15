@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import com.songdosamgyeop.order.R
@@ -36,13 +37,9 @@ class BranchCartFragment : Fragment(R.layout.fragment_branch_cart) {
             b.tvTotal.text = "합계 ${nf.format(amt)}원"
         }
 
+        b.btnPlace.text = "주문하기" // (선택)
         b.btnPlace.setOnClickListener {
-            vm.placeAll(
-                branchId = "BR001",     // TODO: 실제 로그인 정보로 대체
-                branchName = "송도"
-            )
-            Snackbar.make(b.root, "주문이 확정되었습니다.", Snackbar.LENGTH_SHORT).show()
-            requireActivity().onBackPressedDispatcher.onBackPressed()
+            findNavController().navigate(R.id.action_branchCart_to_branchCheckout)
         }
     }
 }

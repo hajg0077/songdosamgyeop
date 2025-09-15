@@ -1,4 +1,3 @@
-// com/songdosamgyeop/order/ui/splash/SplashFragment.kt
 package com.songdosamgyeop.order.ui.splash
 
 import android.content.Intent

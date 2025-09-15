@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/tvName" android:textStyle="bold"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        tools:text="삼겹살 500g"/>
+
+    <TextView
+        android:id="@+id/tvMeta"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        tools:text="8,900원 × 2 = 17,800원"/>
+</LinearLayout>
