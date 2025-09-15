@@ -1,10 +1,10 @@
+// app/src/main/java/com/songdosamgyeop/order/data/repo/BranchOrdersRepository.kt
 package com.songdosamgyeop.order.data.repo
 
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.songdosamgyeop.order.core.model.OrderStatus
 import com.songdosamgyeop.order.data.model.CartItem
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -13,7 +13,14 @@ import javax.inject.Singleton
 @Singleton
 class BranchOrdersRepository @Inject constructor(
     private val db: FirebaseFirestore,
+    private val auth: FirebaseAuth
 ) {
+    suspend fun createOrder(
+        items: List<CartItem>,
+        branchId: String,
+        branchName: String
+    ): String = createOrder(items, branchId, branchName, note = null, requestedAt = null)
+
     suspend fun createOrder(
         items: List<CartItem>,
         branchId: String,
@@ -21,47 +28,55 @@ class BranchOrdersRepository @Inject constructor(
         note: String?,
         requestedAt: Timestamp?
     ): String {
-        require(items.isNotEmpty()) { "장바구니가 비었습니다." }
-        val uid = FirebaseAuth.getInstance().currentUser?.uid
-            ?: error("로그인 필요")
+        require(items.isNotEmpty()) { "items is empty" }
+        val uid = auth.currentUser?.uid ?: error("Not authenticated")
 
-        val totalAmount = items.sumOf { it.amount }
-        val itemsCount = items.sumOf { it.qty }
+        val total = items.sumOf { (it.price ?: 0L) * it.qty }
+        val count = items.sumOf { it.qty }
 
-        val orders = db.collection("orders")
-        val orderRef = orders.document() // 새 ID
+        val keywords = buildNoteKeywords(note)
 
-        val now = FieldValue.serverTimestamp()
-        val batch = db.batch()
-
-        val order = mapOf(
+        val header = hashMapOf(
             "ownerUid" to uid,
             "branchId" to branchId,
             "branchName" to branchName,
-            "branchNameLower" to branchName.lowercase(),
-            "status" to OrderStatus.PENDING.name,
-            "itemsCount" to itemsCount,
-            "totalAmount" to totalAmount,
-            "placedAt" to now,
-            "createdAt" to now,
-            "updatedAt" to now
-        )
-        batch.set(orderRef, order)
-
-        val itemsCol = orderRef.collection("items")
-        items.forEach { c ->
-            val itemRef = itemsCol.document()
-            batch.set(itemRef, mapOf(
-                "productId" to c.productId,
-                "productName" to c.productName,
-                "brandId" to c.brandId,
-                "unitPrice" to c.unitPrice,
-                "qty" to c.qty,
-                "amount" to c.amount
-            ))
+            "status" to "PLACED",
+            "placedAt" to FieldValue.serverTimestamp(),
+            "totalAmount" to total,
+            "itemsCount" to count
+        ).apply {
+            if (!note.isNullOrBlank()) put("note", note)
+            if (requestedAt != null) put("requestedAt", requestedAt)
+            if (keywords.isNotEmpty()) put("noteKeywords", keywords)
         }
 
+        val orderRef = db.collection("orders").document()
+        orderRef.set(header).await()
+
+        val batch = db.batch()
+        items.forEach { line ->
+            val itemRef = orderRef.collection("items").document(line.productId)
+            val item = hashMapOf(
+                "productId" to line.productId,
+                "name" to (line.productName ?: line.productId),
+                "qty" to line.qty,
+                "unit" to (line.unit ?: ""),
+                "price" to (line.price ?: 0L),
+                "brandId" to (line.brandId ?: "COMMON")
+            )
+            batch.set(itemRef, item)
+        }
         batch.commit().await()
         return orderRef.id
+    }
+
+    private fun buildNoteKeywords(note: String?): List<String> {
+        val raw = note?.lowercase()?.trim().orEmpty()
+        if (raw.isBlank()) return emptyList()
+        return raw.split(Regex("[^a-z0-9가-힣]+"))
+            .mapNotNull { it.trim() }
+            .filter { it.length >= 2 }
+            .distinct()
+            .take(10)
     }
 }

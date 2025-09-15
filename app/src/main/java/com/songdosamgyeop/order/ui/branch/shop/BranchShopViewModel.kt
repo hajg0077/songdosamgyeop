@@ -1,8 +1,10 @@
+// app/src/main/java/com/songdosamgyeop/order/ui/branch/shop/BranchShopViewModel.kt
 package com.songdosamgyeop.order.ui.branch.shop
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Timestamp
 import com.songdosamgyeop.order.core.model.BrandId
 import com.songdosamgyeop.order.data.model.CartItem
 import com.songdosamgyeop.order.data.model.Product
@@ -54,6 +56,10 @@ class BranchShopViewModel @Inject constructor(
     val totalQty = cart.map { it.values.sumOf { l -> l.qty } }.asLiveData()
     val totalAmount = cart.map { it.values.sumOf { l -> l.amount } }.asLiveData()
 
+    fun isCartEmpty(): Boolean = _cart.value.isEmpty()
+
+    fun clearCart() { _cart.value = emptyMap() }
+
     fun setQty(productId: String, qty: Int) {
         val cur = _cart.value.toMutableMap()
         val ex = cur[productId] ?: return
@@ -64,8 +70,6 @@ class BranchShopViewModel @Inject constructor(
     fun setBrand(b: BrandId) { brand.value = b }
     fun setCategory(c: String?) { category.value = c }
     fun setQuery(q: String?) { query.value = q?.takeIf { it.isNotBlank() } }
-
-
 
     fun plus(p: Product) {
         val cur = _cart.value.toMutableMap()
@@ -84,28 +88,66 @@ class BranchShopViewModel @Inject constructor(
         _cart.value = cur
     }
 
-    /** 브랜드별로 주문 생성(PENDING) 후 장바구니 비움 */
+    /**
+     * 주문 생성:
+     * - 1순위: repo.placeAll(branchId, branchName, linesByBrand, note, requestedAt) (확장 시그니처)
+     * - 2순위: 브랜드별 loop 후 repo.createOrder(items, branchId, branchName, note, requestedAt)
+     * - 3순위: 가장 구버전 createOrder(items, branchId, branchName)
+     */
     fun placeAll(
         branchId: String,
         branchName: String,
         note: String? = null,
-        requestedAt: com.google.firebase.Timestamp? = null
+        requestedAt: Timestamp? = null,
+        onSuccess: () -> Unit,
+        onError: (Throwable) -> Unit
     ) {
-        val lines = _cart.value.values.toList()
-        if (lines.isEmpty()) return
+        if (_cart.value.isEmpty()) {
+            onError(IllegalStateException("Cart is empty"))
+            return
+        }
+        val grouped: Map<String, List<CartItem>> =
+            _cart.value.values.groupBy { it.brandId ?: "COMMON" }
+                .mapValues { (_, ls) -> ls.map { it.toCartItem() } }
 
         viewModelScope.launch {
             runCatching {
-                lines.groupBy { it.brandId ?: "COMMON" }.forEach { (_, grouped) ->
-                    val items = grouped.map { it.toCartItem() }
-                    // 레포가 확장 시그니처를 지원하면 전달하고, 아니면 기존 메서드 호출
-                    try {
-                        ordersRepo.createOrder(items, branchId, branchName, note, requestedAt)
-                    } catch (_: Throwable) {
-                        ordersRepo.createOrder(items, branchId, branchName)
+                // 확장 시그니처가 있는 경우(권장)
+                val placeAll = ordersRepo::class.members.firstOrNull { it.name == "placeAll" }
+                if (placeAll != null) {
+                    // 리포지토리에서 CartItem/CartLine 타입을 다룰 수 있게 구현되어 있어야 함
+                    @Suppress("UNCHECKED_CAST")
+                    val m = ordersRepo.javaClass.getMethod(
+                        "placeAll",
+                        String::class.java,
+                        String::class.java,
+                        Map::class.java,
+                        String::class.java,
+                        Timestamp::class.java
+                    )
+                    m.invoke(ordersRepo, branchId, branchName, grouped, note, requestedAt)
+                } else {
+                    // 폴백: 브랜드별 createOrder
+                    grouped.forEach { (_, items) ->
+                        runCatching {
+                            val mExt = ordersRepo.javaClass.getMethod(
+                                "createOrder",
+                                List::class.java, String::class.java, String::class.java, String::class.java, Timestamp::class.java
+                            )
+                            mExt.invoke(ordersRepo, items, branchId, branchName, note, requestedAt)
+                        }.recoverCatching {
+                            val mLegacy = ordersRepo.javaClass.getMethod(
+                                "createOrder",
+                                List::class.java, String::class.java, String::class.java
+                            )
+                            mLegacy.invoke(ordersRepo, items, branchId, branchName)
+                        }.getOrThrow()
                     }
                 }
-            }.onSuccess { _cart.value = emptyMap() }
+            }.onSuccess {
+                clearCart()
+                onSuccess()
+            }.onFailure(onError)
         }
     }
 }

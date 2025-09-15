@@ -1,0 +1,185 @@
+<!-- app/src/main/res/layout/fragment_branch_history.xml -->
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data />
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.branch.history.BranchOrderHistoryFragment">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            style="@style/Widget.Material3.Toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:title="@string/branch_history_title" />
+
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="?attr/actionBarSize">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <!-- 검색 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp">
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:padding="12dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:hint="@string/search_hint">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/searchEdit"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:imeOptions="actionSearch"
+                                android:singleLine="true"
+                                tools:text="abc123 혹은 '금요일 오전'"/>
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnClearSearch"
+                            style="@style/Widget.Material3.Button.Icon"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="@string/clear" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 메모검색 안내 뱃지 -->
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/noteSearchBadge"
+                    style="@style/Widget.Material3.Chip.Assist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginBottom="4dp"
+                    android:text="@string/note_search_hint_status_disabled"
+                    android:visibility="gone" />
+
+                <!-- 필터 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="8dp">
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:padding="12dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/periodSpinner"
+                            style="@style/Widget.Material3.TextInputEditText.FilledBox"
+                            android:hint="@string/filter_period"
+                            android:inputType="none"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/chipGroup"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:isSingleSelection="false"
+                            android:singleLine="true">
+
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipPlaced"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:checkable="true"
+                                android:checked="true"
+                                android:text="PLACED" />
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipApproved"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:checkable="true"
+                                android:checked="true"
+                                android:text="APPROVED" />
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipRejected"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:checkable="true"
+                                android:checked="true"
+                                android:text="REJECTED" />
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipShipped"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:checkable="true"
+                                android:checked="true"
+                                android:text="SHIPPED" />
+                            <com.google.android.material.chip.Chip
+                                android:id="@+id/chipDelivered"
+                                style="@style/Widget.Material3.Chip.Filter"
+                                android:checkable="true"
+                                android:checked="true"
+                                android:text="DELIVERED" />
+                        </com.google.android.material.chip.ChipGroup>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    tools:listitem="@layout/item_branch_history_order" />
+
+                <!-- 로딩/끝 표시 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="16dp"
+                    android:paddingBottom="16dp">
+
+                    <ProgressBar
+                        android:id="@+id/loadMore"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:visibility="gone" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/endBadge"
+                        style="@style/Widget.Material3.Chip.Assist"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="@string/no_more_orders"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <!-- 빈 상태 -->
+                <TextView
+                    android:id="@+id/empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="24dp"
+                    android:gravity="center"
+                    android:text="@string/no_orders"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</layout>

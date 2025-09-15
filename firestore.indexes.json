@@ -1,17 +1,58 @@
 {
   "indexes": [
-    { "collectionGroup": "orders", "queryScope": "COLLECTION",
-      "fields": [ { "fieldPath": "status","order":"ASCENDING" },
-        { "fieldPath": "placedAt","order":"DESCENDING" } ] },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "placedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "order": "ASCENDING" },
+        { "fieldPath": "placedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "placedAt", "order": "DESCENDING" }
+      ]
+    },
 
-    { "collectionGroup": "products", "queryScope": "COLLECTION",
-      "fields": [ { "fieldPath": "brandId","order":"ASCENDING" },
-        { "fieldPath": "nameLower","order":"ASCENDING" } ] },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "order": "ASCENDING" },
+        { "fieldPath": "noteKeywords", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "placedAt", "order": "DESCENDING" }
+      ]
+    },
 
-    { "collectionGroup": "products", "queryScope": "COLLECTION",
-      "fields": [ { "fieldPath": "brandId","order":"ASCENDING" },
-        { "fieldPath": "category","order":"ASCENDING" },
-        { "fieldPath": "nameLower","order":"ASCENDING" } ] }
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brandId", "order": "ASCENDING" },
+        { "fieldPath": "name_lower", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brandId", "order": "ASCENDING" },
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "name_lower", "order": "ASCENDING" }
+      ]
+    }
   ],
   "fieldOverrides": []
 }

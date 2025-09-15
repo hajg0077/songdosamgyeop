@@ -28,9 +28,22 @@
         android:label="주문 확인" />
 
     <fragment
-        android:id="@+id/branchHistoryFragment"
+        android:id="@+id/branchOrderHistoryFragment"
         android:name="com.songdosamgyeop.order.ui.branch.history.BranchOrderHistoryFragment"
-        android:label="내역" />
+        android:label="@string/branch_history_title">
+        <action
+            android:id="@+id/action_branchOrderHistory_to_branchOrderDetail"
+            app:destination="@id/branchOrderDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/branchOrderDetailFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.history.BranchOrderDetailFragment"
+        android:label="@string/branch_order_detail_title">
+        <argument
+            android:name="orderId"
+            app:argType="string" />
+    </fragment>
 
     <!-- 필요하면 설정 화면 추가 -->
     <fragment

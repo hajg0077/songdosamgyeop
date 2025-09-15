@@ -1,3 +1,4 @@
+// app/src/main/java/com/songdosamgyeop/order/ui/branch/checkout/BranchCheckoutFragment.kt
 package com.songdosamgyeop.order.ui.branch.checkout
 
 import android.os.Bundle
@@ -23,7 +24,9 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
     private lateinit var b: FragmentBranchCheckoutBinding
     private lateinit var adapter: BranchCheckoutAdapter
     private val nf = NumberFormat.getNumberInstance(Locale.KOREA)
-    private val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA)
+    private val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.KOREA)
+
+    private var requestedAt: Timestamp? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         b = FragmentBranchCheckoutBinding.bind(view)
@@ -51,37 +54,58 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
 
         // 합계
         vm.totalAmount.observe(viewLifecycleOwner) { amt ->
-            b.tvTotal.text = "합계 ${nf.format(amt)}원"
+            b.tvTotal.text = getString(R.string.order_amount_fmt, nf.format(amt))
         }
 
-        // 날짜 선택(선택)
+        // 날짜 선택(희망 납품일) — UTC 보정
         b.etDate.setOnClickListener {
             val picker = MaterialDatePicker.Builder.datePicker()
-                .setTitleText("희망 납품일 선택")
+                .setTitleText(getString(R.string.select_requested_date))
                 .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
                 .build()
             picker.addOnPositiveButtonClickListener { utcMillis ->
-                // 선택값을 로컬 Date로 표시, 서버 저장은 Timestamp로
-                val date = Date(utcMillis)
-                b.etDate.setText(sdf.format(date))
-                selectedDate = Timestamp(date)
+                val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+                cal.timeInMillis = utcMillis
+                // 로컬 표시 + 시분은 10:00으로 고정(가정)
+                val local = Calendar.getInstance().apply {
+                    set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 10, 0, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                requestedAt = Timestamp(local.time)
+                b.etDate.setText(sdf.format(local.time))
             }
             picker.show(parentFragmentManager, "branchCheckoutDate")
         }
 
         b.btnConfirm.setOnClickListener {
-            val note = b.etNote.text?.toString()?.takeIf { it.isNotBlank() }
-            // TODO: 실제 로그인 사용자 정보로 치환
-            val branchId = "BR001"
-            val branchName = "송도"
+            if (vm.isCartEmpty()) {
+                Snackbar.make(b.root, R.string.cart_empty, Snackbar.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-            vm.placeAll(branchId, branchName, note = note, requestedAt = selectedDate)
-            Snackbar.make(b.root, "주문이 접수되었습니다.", Snackbar.LENGTH_LONG).show()
-            requireActivity().onBackPressedDispatcher.onBackPressed()
+            val note = b.etNote.text?.toString()?.takeIf { it.isNotBlank() }
+
+            // TODO 실제 로그인/선택된 지점으로 치환
+            val branchId = "TODO_BRANCH_ID"
+            val branchName = "TODO_BRANCH_NAME"
+
+            b.btnConfirm.isEnabled = false
+            vm.placeAll(
+                branchId = branchId,
+                branchName = branchName,
+                note = note,
+                requestedAt = requestedAt,
+                onSuccess = {
+                    Snackbar.make(b.root, R.string.order_placed, Snackbar.LENGTH_LONG).show()
+                    requireActivity().onBackPressedDispatcher.onBackPressed()
+                },
+                onError = {
+                    b.btnConfirm.isEnabled = true
+                    Snackbar.make(b.root, getString(R.string.order_failed_fmt, it.message ?: "unknown"), Snackbar.LENGTH_LONG).show()
+                }
+            )
         }
     }
-
-    private var selectedDate: Timestamp? = null
 
     private fun brandLabel(brandId: String) = when (brandId) {
         "SONGDO" -> "송도삼겹"
