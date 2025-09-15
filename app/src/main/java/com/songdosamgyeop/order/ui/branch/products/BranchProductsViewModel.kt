@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.songdosamgyeop.order.core.model.BrandId
 import com.songdosamgyeop.order.data.model.Product
 import com.songdosamgyeop.order.data.repo.OrdersRepository
-import com.songdosamgyeop.order.data.repo.ProductRepository
+import com.songdosamgyeop.order.data.repo.ProductsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
  */
 @HiltViewModel
 class BranchProductsViewModel @Inject constructor(
-    private val productsRepo: ProductRepository,
+    private val productsRepo: ProductsRepository,
     private val ordersRepo: OrdersRepository
 ) : ViewModel() {
 

@@ -13,7 +13,7 @@ import javax.inject.Singleton
 @Singleton
 class ProductsRepositoryImpl @Inject constructor(
     private val db: FirebaseFirestore
-) : ProductRepository {
+) : ProductsRepository {
 
     override fun subscribeProducts(
         brandId: String?, category: String?, query: String?

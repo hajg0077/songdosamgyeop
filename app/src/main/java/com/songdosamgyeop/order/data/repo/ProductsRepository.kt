@@ -13,7 +13,7 @@ import javax.inject.Singleton
 
 /** 상품 조회 레포지토리(브랜드/카테고리/검색 접두 필터) */
 @Singleton
-class ProductRepository @Inject constructor(
+class ProductsRepository @Inject constructor(
     private val db: FirebaseFirestore
 ) {
     fun subscribeProducts(
