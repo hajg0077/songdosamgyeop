@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
  * 상품 목록 VM: 필터(브랜드/카테고리/검색) + 목록 구독 + '장바구니에 담기'
  */
 @HiltViewModel
-class ProductsViewModel @Inject constructor(
+class BranchProductsViewModel @Inject constructor(
     private val productsRepo: ProductRepository,
     private val ordersRepo: OrdersRepository
 ) : ViewModel() {

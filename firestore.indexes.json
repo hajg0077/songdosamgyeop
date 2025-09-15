@@ -1,12 +1,17 @@
 {
   "indexes": [
-    {
-      "collectionGroup": "orders",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "placedAt", "order": "DESCENDING" }
-      ]
-    }
-  ]
+    { "collectionGroup": "orders", "queryScope": "COLLECTION",
+      "fields": [ { "fieldPath": "status","order":"ASCENDING" },
+        { "fieldPath": "placedAt","order":"DESCENDING" } ] },
+
+    { "collectionGroup": "products", "queryScope": "COLLECTION",
+      "fields": [ { "fieldPath": "brandId","order":"ASCENDING" },
+        { "fieldPath": "nameLower","order":"ASCENDING" } ] },
+
+    { "collectionGroup": "products", "queryScope": "COLLECTION",
+      "fields": [ { "fieldPath": "brandId","order":"ASCENDING" },
+        { "fieldPath": "category","order":"ASCENDING" },
+        { "fieldPath": "nameLower","order":"ASCENDING" } ] }
+  ],
+  "fieldOverrides": []
 }

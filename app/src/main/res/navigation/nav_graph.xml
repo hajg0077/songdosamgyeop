@@ -81,17 +81,17 @@
     </fragment>
 
     <fragment
-        android:id="@+id/productsFragment"
-        android:name="com.songdosamgyeop.order.ui.branch.products.ProductsFragment"
+        android:id="@+id/branchproductsFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.products.BranchProductsFragment"
         android:label="상품 목록">
         <action
             android:id="@+id/action_products_to_cart"
-            app:destination="@id/cartFragment"/>
+            app:destination="@id/branchcartFragment"/>
     </fragment>
 
     <fragment
-        android:id="@+id/cartFragment"
-        android:name="com.songdosamgyeop.order.ui.branch.cart.CartFragment"
+        android:id="@+id/branchcartFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.cart.BranchcartFragment"
         android:label="장바구니"/>
 
     <fragment

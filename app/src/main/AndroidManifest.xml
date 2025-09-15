@@ -24,6 +24,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.hq.HqActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.branch.BranchActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

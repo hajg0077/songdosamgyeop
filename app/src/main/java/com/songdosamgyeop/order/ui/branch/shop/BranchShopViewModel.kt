@@ -4,68 +4,101 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.songdosamgyeop.order.core.model.BrandId
-import com.songdosamgyeop.order.data.model.CartLine
+import com.songdosamgyeop.order.data.model.CartItem
 import com.songdosamgyeop.order.data.model.Product
-import com.songdosamgyeop.order.data.repo.OrdersRepository
+import com.songdosamgyeop.order.data.repo.BranchOrdersRepository
 import com.songdosamgyeop.order.data.repo.ProductRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-/** 브랜치 상품 주문 탭 VM: 상품 목록 필터 + 장바구니 + 브랜드별 분할 확정 */
 @HiltViewModel
 class BranchShopViewModel @Inject constructor(
-    private val productsRepo: ProductRepository,
-    private val ordersRepo: OrdersRepository
+    private val productRepo: ProductRepository,
+    private val ordersRepo: BranchOrdersRepository
 ) : ViewModel() {
 
-    // 필터 상태
-    private val brandTab = MutableStateFlow(BrandId.SONGDO)
+    private val brand = MutableStateFlow(BrandId.SONGDO)
     private val category = MutableStateFlow<String?>(null)
     private val query = MutableStateFlow<String?>(null)
 
-    // 장바구니
-    private val _cart = MutableStateFlow<Map<String, CartLine>>(emptyMap()) // key = productId
-    val cart = _cart.asStateFlow()
-    val cartList = cart.map { it.values.toList() }.asLiveData()
-
-    // 상품 목록 구독
-    val products = combine(brandTab, category, query.debounce(200)) { b, c, q ->
+    val products = combine(brand, category, query.debounce(200)) { b, c, q ->
         Triple(b, c, q)
     }.flatMapLatest { (b, c, q) ->
-        productsRepo.subscribeProducts(b, c, q)
-    }.asLiveData(viewModelScope.coroutineContext)
+        productRepo.subscribeProducts(b, c, q)
+    }.asLiveData()
 
-    // --------- 장바구니 조작 ---------
-    fun plus(p: Product) {
-        val cur = _cart.value[p.id]
-        val next = (cur?.qty ?: 0) + 1
-        _cart.value = _cart.value + (p.id to CartLine(p.id, p.brandId, p.name, p.price, next))
-    }
-    fun minus(p: Product) {
-        val cur = _cart.value[p.id] ?: return
-        val next = (cur.qty - 1).coerceAtLeast(0)
-        _cart.value = if (next == 0) _cart.value - p.id else _cart.value + (p.id to cur.copy(qty = next))
-    }
-    fun clearCart() { _cart.value = emptyMap() }
-
-    // --------- 주문 확정(브랜드별 분할 생성) ---------
-    fun placeAll() = viewModelScope.launch {
-        val lines = _cart.value.values.filter { it.qty > 0 }
-        if (lines.isEmpty()) return@launch
-
-        val groups = lines.groupBy { it.brandId }           // SONGDO / BULBAEK / HONG / COMMON
-        for ((brandId, group) in groups) {
-            val orderId = ordersRepo.createDraftForBrand(brandId)
-            ordersRepo.putItems(orderId, group)
-            ordersRepo.place(orderId)
-        }
-        clearCart()
+    data class Line(
+        val productId: String,
+        val productName: String,
+        val unitPrice: Long,
+        val qty: Int,
+        val brandId: String?,
+        val category: String
+    ) {
+        val amount: Long get() = unitPrice * qty
+        fun toCartItem() = CartItem(productId, productName, brandId, unitPrice, qty)
     }
 
-    // --------- 외부에서 필터 변경 ---------
-    fun setBrand(b: BrandId) { brandTab.value = b }
+    private val _cart = MutableStateFlow<Map<String, Line>>(emptyMap())
+    val cart: StateFlow<Map<String, Line>> = _cart.asStateFlow()
+
+    val cartList = cart.map { it.values.sortedBy { l -> l.productName } }.asLiveData()
+    val totalQty = cart.map { it.values.sumOf { l -> l.qty } }.asLiveData()
+    val totalAmount = cart.map { it.values.sumOf { l -> l.amount } }.asLiveData()
+
+    fun setQty(productId: String, qty: Int) {
+        val cur = _cart.value.toMutableMap()
+        val ex = cur[productId] ?: return
+        if (qty <= 0) cur.remove(productId) else cur[productId] = ex.copy(qty = qty)
+        _cart.value = cur
+    }
+
+    fun setBrand(b: BrandId) { brand.value = b }
     fun setCategory(c: String?) { category.value = c }
-    fun setQuery(q: String?) { query.value = q }
+    fun setQuery(q: String?) { query.value = q?.takeIf { it.isNotBlank() } }
+
+
+
+    fun plus(p: Product) {
+        val cur = _cart.value.toMutableMap()
+        val ex = cur[p.id]
+        cur[p.id] = if (ex == null)
+            Line(p.id, p.name, p.price, 1, p.brandId, p.category)
+        else ex.copy(qty = ex.qty + 1)
+        _cart.value = cur
+    }
+
+    fun minus(p: Product) {
+        val cur = _cart.value.toMutableMap()
+        val ex = cur[p.id] ?: return
+        val next = ex.qty - 1
+        if (next <= 0) cur.remove(p.id) else cur[p.id] = ex.copy(qty = next)
+        _cart.value = cur
+    }
+
+    /** 브랜드별로 주문 생성(PENDING) 후 장바구니 비움 */
+    fun placeAll(
+        branchId: String = "BR001",   // TODO: 실제 로그인 사용자 프로필에서 주입
+        branchName: String = "송도"
+    ) {
+        val lines = _cart.value.values.toList()
+        if (lines.isEmpty()) return
+
+        viewModelScope.launch {
+            runCatching {
+                lines.groupBy { it.brandId ?: "COMMON" }.forEach { (_, grouped) ->
+                    val items = grouped.map { it.toCartItem() }
+                    ordersRepo.createOrder(items, branchId, branchName)
+                }
+            }.onSuccess { _cart.value = emptyMap() }
+        }
+    }
 }

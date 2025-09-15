@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/menu_branch_products" android:title="상품"/>
+    <item android:id="@+id/menu_branch_cart" android:title="장바구니"/>
+    <item android:id="@+id/menu_branch_history" android:title="내역"/>
+    <item android:id="@+id/menu_branch_settings" android:title="설정"/>
+</menu>
