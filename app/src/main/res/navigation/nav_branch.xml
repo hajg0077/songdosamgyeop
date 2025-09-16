@@ -45,4 +45,10 @@
             android:name="orderId"
             app:argType="string" />
     </fragment>
+
+
+    <fragment
+        android:id="@+id/branchSettingsFragment"
+        android:name="com.songdosamgyeop.order.ui.branch.settings.BranchSettingsFragment"
+        android:label="@string/tab_settings" />
 </navigation>

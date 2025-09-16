@@ -12,4 +12,8 @@
         android:id="@+id/branchOrderHistoryFragment"
         android:title="@string/tab_history"
         android:icon="@drawable/ic_history_24" />
+    <item
+        android:id="@+id/branchSettingsFragment"
+        android:title="@string/tab_settings"
+        android:icon="@drawable/ic_settings_24" />
 </menu>

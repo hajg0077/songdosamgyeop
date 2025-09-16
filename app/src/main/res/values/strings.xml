@@ -70,6 +70,18 @@
     <string name="tab_history">내역</string>
     <string name="checkout_title">주문 확인</string>
 
+    <string name="tab_settings">설정</string>
+    <string name="account_info">계정 정보</string>
+    <string name="email">이메일</string>
+    <string name="branch">지사</string>
+    <string name="role">역할</string>
+    <string name="app_info">앱 정보</string>
+    <string name="version">버전</string>
+    <string name="app_version_fmt">v%1$s</string>
+    <string name="logout">로그아웃</string>
+    <string name="logged_out">로그아웃되었습니다.</string>
+    <string name="not_available">N/A</string>
+
     <!-- 검색/안내 문구 -->
     <string name="branch_search_hint_period_disabled">지사명 검색에서는 기간 필터가 적용되지 않습니다.</string>
 </resources>
