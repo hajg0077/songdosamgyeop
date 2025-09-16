@@ -62,7 +62,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnConfirm"
-                style="@style/Widget.Material3.Button.FilledButton"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:text="주문 확정"/>
         </LinearLayout>
     </LinearLayout>

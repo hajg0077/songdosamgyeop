@@ -27,7 +27,7 @@
             android:text="합계 0원"/>
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnPlace"
-            style="@style/Widget.Material3.Button.FilledButton"
+            style="@style/Widget.Material3.Button.TonalButton"
             android:text="주문 확정"/>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

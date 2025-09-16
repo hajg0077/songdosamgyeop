@@ -194,7 +194,7 @@ class OrdersRepository @Inject constructor(
         val u = uid()
         var q: Query = db.collection("orders")
             .whereEqualTo("ownerUid", u)
-            .whereEqualTo("status", OrderStatus.PLACED.name)
+            .whereEqualTo("status", OrderStatus.PENDING.name)
 
         if (from != null) q = q.whereGreaterThanOrEqualTo("placedAt", from)
         if (to != null)   q = q.whereLessThan("placedAt", to)

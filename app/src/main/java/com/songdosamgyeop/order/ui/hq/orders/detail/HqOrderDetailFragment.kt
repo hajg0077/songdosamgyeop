@@ -152,7 +152,7 @@ class HqOrderDetailFragment : Fragment(R.layout.fragment_hq_order_detail) {
             "APPROVED"  -> StatusBadge.OrderStatus.PREPARING   // 근사치 매핑
             "REJECTED"  -> StatusBadge.OrderStatus.CANCELED
             "SHIPPED"   -> StatusBadge.OrderStatus.SHIPPED
-            "DELIVERED" -> StatusBadge.OrderStatus.SHIPPED     // 배지 리소스 없으면 SHIPPED 재사용
+            "DELIVERED" -> StatusBadge.OrderStatus.DELIVERED     // 배지 리소스 없으면 SHIPPED 재사용
             "PENDING"   -> StatusBadge.OrderStatus.PLACED
             else        -> StatusBadge.OrderStatus.DRAFT
         }

@@ -186,7 +186,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnApprove"
-            style="@style/Widget.Material3.Button.FilledButton"
+            style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"

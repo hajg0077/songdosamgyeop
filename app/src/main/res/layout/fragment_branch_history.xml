@@ -101,7 +101,6 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:isSingleSelection="false"
                             android:singleLine="true">
 
                             <com.google.android.material.chip.Chip
@@ -109,31 +108,31 @@
                                 style="@style/Widget.Material3.Chip.Filter"
                                 android:checkable="true"
                                 android:checked="true"
-                                android:text="PENDING" />
+                                android:text="@string/badge_pending" />
                             <com.google.android.material.chip.Chip
                                 android:id="@+id/chipApproved"
                                 style="@style/Widget.Material3.Chip.Filter"
                                 android:checkable="true"
                                 android:checked="true"
-                                android:text="APPROVED" />
+                                android:text="@string/badge_approved" />
                             <com.google.android.material.chip.Chip
                                 android:id="@+id/chipRejected"
                                 style="@style/Widget.Material3.Chip.Filter"
                                 android:checkable="true"
                                 android:checked="true"
-                                android:text="REJECTED" />
+                                android:text="@string/badge_rejected" />
                             <com.google.android.material.chip.Chip
                                 android:id="@+id/chipShipped"
                                 style="@style/Widget.Material3.Chip.Filter"
                                 android:checkable="true"
                                 android:checked="true"
-                                android:text="SHIPPED" />
+                                android:text="@string/badge_shipped" />
                             <com.google.android.material.chip.Chip
                                 android:id="@+id/chipDelivered"
                                 style="@style/Widget.Material3.Chip.Filter"
                                 android:checkable="true"
                                 android:checked="true"
-                                android:text="DELIVERED" />
+                                android:text="@string/badge_delivered" />
                         </com.google.android.material.chip.ChipGroup>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
