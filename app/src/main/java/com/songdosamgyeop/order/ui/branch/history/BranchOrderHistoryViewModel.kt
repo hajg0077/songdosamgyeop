@@ -1,3 +1,4 @@
+// app/src/main/java/com/songdosamgyeop/order/ui/branch/history/BranchOrderHistoryViewModel.kt
 package com.songdosamgyeop.order.ui.branch.history
 
 import androidx.lifecycle.LiveData
@@ -25,7 +26,7 @@ data class BranchHistoryState(
     val items: List<OrderHeader> = emptyList(),
     val loadingMore: Boolean = false,
     val endReached: Boolean = false,
-    val noteSearchActive: Boolean = false
+    val branchSearchActive: Boolean = false // 지사명 검색 중 기간 필터 무시 안내용
 )
 
 @HiltViewModel
@@ -83,7 +84,7 @@ class BranchOrderHistoryViewModel @Inject constructor(
     private fun resetAndLoad() {
         lastDoc = null
         loadingNext = false
-        _uiState.value = BranchHistoryState(loading = true, noteSearchActive = isNoteSearchActive())
+        _uiState.value = BranchHistoryState(loading = true, branchSearchActive = isBranchSearchActive())
         query(next = false)
     }
 
@@ -117,41 +118,43 @@ class BranchOrderHistoryViewModel @Inject constructor(
         return if (s.length in 8..28 && s.all { it.isLetterOrDigit() }) s else null
     }
 
-    private fun noteTokens(): List<String> {
+    private fun branchKeyword(): String? {
         val raw = searchQuery.trim().lowercase()
-        if (raw.isBlank()) return emptyList()
-        return raw.split(Regex("[^a-z0-9가-힣]+"))
-            .mapNotNull { it.trim() }
-            .filter { it.length >= 2 }
-            .distinct()
-            .take(10)
+        return raw.takeIf { it.isNotEmpty() && isOrderIdQuery() == null }
     }
 
-    private fun isNoteSearchActive() = searchQuery.isNotBlank() && isOrderIdQuery() == null
+    private fun isBranchSearchActive() = branchKeyword() != null
 
     private fun baseQuery(uid: String): Query {
         var q: Query = db.collection("orders")
             .whereEqualTo("ownerUid", uid)
 
-        val (start, end) = timeRange()
-        if (start != null) q = q.whereGreaterThanOrEqualTo("placedAt", start)
-        if (end != null) q = q.whereLessThan("placedAt", end)
-
         val idQuery = isOrderIdQuery()
-        val tokens = noteTokens()
+        val branch = branchKeyword()
 
-        // 메모 검색 활성화 시 상태칩(whereIn) 적용 불가 → 무시
-        if (idQuery == null && tokens.isEmpty()) {
+        // 지사명 검색일 때: branchName_lower prefix 검색 + 상태(whereIn) 적용 가능
+        if (idQuery == null && branch != null) {
+            q = q.whereGreaterThanOrEqualTo("branchName_lower", branch)
+                .whereLessThan("branchName_lower", branch + "\uf8ff")
+                .orderBy("branchName_lower")
+                .orderBy("placedAt", Query.Direction.DESCENDING)
+
             val allCount = OrderStatus.values().size
             if (statusEnabled.isNotEmpty() && statusEnabled.size < allCount) {
                 q = q.whereIn("status", statusEnabled.map { it.name })
             }
+            return q
         }
 
-        if (idQuery == null && tokens.isNotEmpty()) {
-            q = q.whereArrayContainsAny("noteKeywords", tokens)
-        }
+        // 일반 목록(검색 아님): 기간/상태 + placedAt desc
+        val (start, end) = timeRange()
+        if (start != null) q = q.whereGreaterThanOrEqualTo("placedAt", start)
+        if (end != null) q = q.whereLessThan("placedAt", end)
 
+        val allCount = OrderStatus.values().size
+        if (statusEnabled.isNotEmpty() && statusEnabled.size < allCount) {
+            q = q.whereIn("status", statusEnabled.map { it.name })
+        }
         return q.orderBy("placedAt", Query.Direction.DESCENDING)
     }
 
@@ -162,13 +165,14 @@ class BranchOrderHistoryViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 if (idQuery != null) {
-                    // 주문ID 단건 조회 후 로컬 필터
+                    // 주문ID 단건 조회 후 로컬 필터(기간/상태)
                     val doc = db.collection("orders").document(idQuery).get().await()
                     val header = doc.toObject(OrderHeader::class.java)?.copy(id = doc.id)
                     val result = header?.takeIf { it.ownerUid == uid }?.let { h ->
                         val (start, end) = timeRange()
                         val placed = h.placedAt
                         val inPeriod = when {
+                            isBranchSearchActive() -> true // 지사 검색 아님 → 무시되지 않음, 여기선 ID모드라 기간 적용
                             start != null && end != null -> placed != null && placed >= start && placed < end
                             start != null -> placed != null && placed >= start
                             end != null -> placed != null && placed < end
@@ -182,7 +186,7 @@ class BranchOrderHistoryViewModel @Inject constructor(
 
                     _uiState.postValue(
                         BranchHistoryState(
-                            loading = false, items = result, loadingMore = false, endReached = true, noteSearchActive = false
+                            loading = false, items = result, loadingMore = false, endReached = true, branchSearchActive = false
                         )
                     )
                     return@launch
@@ -207,17 +211,17 @@ class BranchOrderHistoryViewModel @Inject constructor(
                         items = merged,
                         loadingMore = false,
                         endReached = endReached,
-                        noteSearchActive = isNoteSearchActive()
+                        branchSearchActive = isBranchSearchActive()
                     )
                 )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 _uiState.postValue(
                     BranchHistoryState(
                         loading = false,
                         items = if (next) _uiState.value?.items.orEmpty() else emptyList(),
                         loadingMore = false,
                         endReached = true,
-                        noteSearchActive = isNoteSearchActive()
+                        branchSearchActive = isBranchSearchActive()
                     )
                 )
             } finally {

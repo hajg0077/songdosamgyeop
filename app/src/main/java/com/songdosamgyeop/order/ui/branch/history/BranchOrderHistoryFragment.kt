@@ -1,3 +1,4 @@
+// app/src/main/java/com/songdosamgyeop/order/ui/branch/history/BranchOrderHistoryFragment.kt
 package com.songdosamgyeop.order.ui.branch.history
 
 import android.os.Bundle
@@ -30,7 +31,6 @@ class BranchOrderHistoryFragment : Fragment() {
 
     private val vm: BranchOrderHistoryViewModel by viewModels()
     private lateinit var adapter: BranchHistoryAdapter
-
     private val moneyFormat = NumberFormat.getNumberInstance(Locale.KOREA)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -55,7 +55,7 @@ class BranchOrderHistoryFragment : Fragment() {
         binding.recycler.layoutManager = LinearLayoutManager(requireContext())
         binding.recycler.adapter = adapter
 
-        // 검색 입력 디바운스 트리거
+        // 검색 입력(지사명 or #주문ID)
         binding.searchEdit.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {}
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -84,10 +84,10 @@ class BranchOrderHistoryFragment : Fragment() {
             getString(R.string.period_this_month)
         )
         binding.periodSpinner.setAdapter(ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, periodItems))
-        binding.periodSpinner.setText(periodItems[1], false) // 기본: 오늘
+        binding.periodSpinner.setText(periodItems[1], false)
         binding.periodSpinner.setOnItemClickListener { _, _, position, _ -> vm.setPeriod(position) }
 
-        // 상태 칩 (PENDING 포함)
+        // 상태 칩
         fun bindChip(id: Int, status: OrderStatus) {
             binding.root.findViewById<Chip>(id)
                 .setOnCheckedChangeListener { _, checked -> vm.setStatusEnabled(status, checked) }
@@ -98,7 +98,6 @@ class BranchOrderHistoryFragment : Fragment() {
         bindChip(R.id.chipShipped, OrderStatus.SHIPPED)
         bindChip(R.id.chipDelivered, OrderStatus.DELIVERED)
 
-        // 새로고침
         binding.swipe.setOnRefreshListener { vm.refresh() }
 
         vm.uiState.observe(viewLifecycleOwner) { s ->
@@ -106,17 +105,17 @@ class BranchOrderHistoryFragment : Fragment() {
             binding.empty.isVisible = !s.loading && s.items.isEmpty()
             adapter.submitList(s.items)
 
-            // 합계 푸터
             binding.footerCount.text = getString(R.string.order_count_fmt, s.items.size)
             val total = s.items.sumOf { it.totalAmount ?: 0L }
             binding.footerAmount.text = getString(R.string.order_amount_fmt, moneyFormat.format(total))
 
-            // 로딩/끝/메모검색 안내
             binding.loadMore.isVisible = s.loadingMore
             binding.endBadge.isVisible = !s.loading && !s.loadingMore && s.endReached && s.items.isNotEmpty()
-            binding.noteSearchBadge.isVisible = s.noteSearchActive
-            if (s.noteSearchActive) {
-                binding.noteSearchBadge.text = getString(R.string.note_search_hint_status_disabled)
+
+            // 지사명 검색 배지(기간 무시 알림)
+            binding.noteSearchBadge.isVisible = s.branchSearchActive
+            if (s.branchSearchActive) {
+                binding.noteSearchBadge.text = getString(R.string.branch_search_hint_period_disabled)
             }
         }
     }
