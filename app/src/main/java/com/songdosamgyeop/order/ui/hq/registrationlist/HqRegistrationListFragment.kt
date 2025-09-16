@@ -57,7 +57,6 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         }
         b.recycler.adapter = adapter
 
-        // ❌ vm.pendingList ... (전부 삭제)
         // ✅ 통합된 목록 LiveData 사용
         vm.list.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list)

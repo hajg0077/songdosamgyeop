@@ -14,21 +14,21 @@
             android:orientation="horizontal" android:gravity="center_vertical">
 
             <TextView
-                android:id="@+id/txtName"
+                android:id="@+id/tvName"
                 style="@style/TextAppearance.Material3.BodyLarge"
                 android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1"
                 tools:text="삼겹살 1kg" />
 
             <TextView
-                android:id="@+id/txtAmount"
+                android:id="@+id/tvLineTotal"
                 style="@style/TextAppearance.Material3.TitleMedium"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 tools:text="34,000" />
         </LinearLayout>
 
         <TextView
-            android:id="@+id/txtMeta"
+            android:id="@+id/tvUnit"
             style="@style/TextAppearance.Material3.BodySmall"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:alpha="0.75"

@@ -35,7 +35,7 @@ class LoginViewModel @Inject constructor(
         val base = mutableMapOf(
             "email" to "",
             "name" to "DevUser",
-            "role" to when (role) { UserRole.HQ -> "HQ"; UserRole.BRANCH -> "BRANCH" },
+            "role" to when (role) { UserRole.HQ -> "HQ"; UserRole.BRANCH -> "BRANCH" else -> "NONE"},
             "lastLoginAt" to FieldValue.serverTimestamp()
         )
 

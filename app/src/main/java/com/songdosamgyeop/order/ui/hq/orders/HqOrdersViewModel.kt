@@ -144,16 +144,29 @@ class HqOrdersViewModel @Inject constructor(
 
     /** Firestore → OrderRow 매핑 (원본 모델) */
     private fun DocumentSnapshot.toOrderRow(): OrderRow? = try {
+        // 안전한 파싱 (nullable → 기본값 대입)
+        val brandId     = getString("brandId").orEmpty()
+        val branchId    = getString("branchId").orEmpty()
+        val branchName  = getString("branchName") ?: branchId
+        val status      = getString("status").orEmpty()
+        val ownerUid    = getString("ownerUid").orEmpty()
+
+        val itemsCount  = (getLong("itemsCount") ?: getLong("itemCount"))?.toInt() ?: 0
+        val totalAmount = getLong("totalAmount") ?: 0L
+        val placedAt    = getTimestamp("placedAt")
+        val createdAt   = getTimestamp("createdAt")
+
         OrderRow(
-            id = id,
-            brandId = getString("brandId"),
-            branchId = getString("branchId"),
-            branchName = getString("branchName"),
-            status = getString("status"),
-            itemsCount = (getLong("itemsCount") ?: getLong("itemCount"))?.toInt(),
-            totalAmount = getLong("totalAmount"),
-            placedAt = getTimestamp("placedAt"),
-            createdAt = getTimestamp("createdAt")
+            id          = id,
+            brandId     = brandId,
+            branchId    = branchId,
+            branchName  = branchName,
+            status      = status,
+            itemsCount  = itemsCount,
+            totalAmount = totalAmount,
+            placedAt    = placedAt,
+            createdAt   = createdAt,
+            ownerUid    = ownerUid
         )
     } catch (e: Exception) {
         Log.e(TAG, "toOrderRow(): ${e.message}", e)

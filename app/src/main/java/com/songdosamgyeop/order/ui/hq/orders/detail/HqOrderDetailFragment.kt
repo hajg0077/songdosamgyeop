@@ -87,8 +87,7 @@ class HqOrderDetailFragment : Fragment(R.layout.fragment_hq_order_detail) {
             applyStatusChip(b.chipStatus, h.status)
 
             // 주문 시각
-            val whenStr = h.placedAt?.toDate()?.let(sdf::format)
-                ?: h.createdAt?.toDate()?.let(sdf::format) ?: "-"
+            val whenStr = formatWhen(sdf, h.placedAt, h.createdAt)
             b.tvWhen.text = whenStr
 
             // 합계/아이템 개수/짧은 ID
@@ -146,15 +145,16 @@ class HqOrderDetailFragment : Fragment(R.layout.fragment_hq_order_detail) {
 
     /** 주문 상태 문자열 -> 배지 스타일 적용 */
     private fun applyStatusChip(chip: Chip, status: String?) {
-        // 현재 StatusBadge가 DRAFT/PLACED/PREPARING/SHIPPED/CANCELED 기반.
-        // 서버 상태(APPROVED/REJECTED/SHIPPED/DELIVERED/PENDING)를 임시 매핑하여 표시.
+        // 내부 enum 이름이 State라고 가정 (프로젝트 내 StatusBadge 파일 확인 필수!)
         val mapped = when (status?.uppercase(Locale.ROOT)) {
-            "APPROVED"  -> StatusBadge.OrderStatus.PREPARING   // 근사치 매핑
-            "REJECTED"  -> StatusBadge.OrderStatus.CANCELED
-            "SHIPPED"   -> StatusBadge.OrderStatus.SHIPPED
-            "DELIVERED" -> StatusBadge.OrderStatus.DELIVERED     // 배지 리소스 없으면 SHIPPED 재사용
-            "PENDING"   -> StatusBadge.OrderStatus.PLACED
-            else        -> StatusBadge.OrderStatus.DRAFT
+            "APPROVED"  -> StatusBadge.State.PREPARING
+            "REJECTED"  -> StatusBadge.State.CANCELED
+            "SHIPPED"   -> StatusBadge.State.SHIPPED
+            "DELIVERED" -> runCatching {
+                java.lang.Enum.valueOf(StatusBadge.State::class.java, "DELIVERED")
+            }.getOrDefault(StatusBadge.State.SHIPPED) // 없으면 SHIPPED로 대체
+            "PENDING"   -> StatusBadge.State.PLACED
+            else        -> StatusBadge.State.DRAFT
         }
         StatusBadge.apply(chip, mapped)
         chip.visibility = View.VISIBLE
@@ -170,5 +170,20 @@ class HqOrderDetailFragment : Fragment(R.layout.fragment_hq_order_detail) {
 
     private fun refreshMenu() {
         requireActivity().invalidateOptionsMenu()
+    }
+
+    private fun formatWhen(
+        sdf: SimpleDateFormat,
+        placedAt: Any?,
+        createdAt: Any?
+    ): String {
+        val ts = placedAt ?: createdAt ?: return "-"
+        return when (ts) {
+            is com.google.firebase.Timestamp -> sdf.format(ts.toDate())
+            is java.util.Date -> sdf.format(ts)
+            is Long -> sdf.format(java.util.Date(ts))
+            is String -> ts // 이미 포맷된 문자열인 경우
+            else -> "-"
+        }
     }
 }

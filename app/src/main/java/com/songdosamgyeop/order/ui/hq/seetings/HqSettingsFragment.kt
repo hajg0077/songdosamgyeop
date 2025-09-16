@@ -93,8 +93,7 @@ class HqSettingsFragment : Fragment(R.layout.fragment_hq_settings) {
 
     private fun navigateToAuthAndClearBackstack() {
         val nav = findNavController()
-        // TODO: 아래 destination을 실제 로그인/인증 시작지점으로 교체하세요 (예: R.id.authFragment or R.id.auth_graph)
-        val dest = R.id.authFragment
+        val dest = R.id.loginFragment
         val opts = NavOptions.Builder()
             .setPopUpTo(nav.graph.id, true) // 전체 백스택 제거
             .build()
