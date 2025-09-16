@@ -5,9 +5,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.songdosamgyeop.order.core.model.OrderStatus
 import com.songdosamgyeop.order.data.model.OrderHeader
 import com.songdosamgyeop.order.databinding.ItemBranchHistoryOrderBinding
+import com.songdosamgyeop.order.ui.common.applyOrderStatusChip
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -42,28 +42,14 @@ class BranchHistoryVH(
 ) : RecyclerView.ViewHolder(binding.root) {
 
     private val money = NumberFormat.getNumberInstance(Locale.KOREA)
-    private val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.KOREA).apply {
-        timeZone = TimeZone.getDefault()
-    }
+    private val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.KOREA).apply { timeZone = TimeZone.getDefault() }
 
     fun bind(item: OrderHeader) = with(binding) {
-        val whenStr = item.placedAt?.toDate()?.let(sdf::format) ?: "-"
         txtBranch.text = item.branchName ?: item.branchId ?: "-"
-        txtDate.text = whenStr
+        txtDate.text = item.placedAt?.toDate()?.let(sdf::format) ?: "-"
         txtAmount.text = money.format(item.totalAmount ?: 0L)
         txtCount.text = item.itemsCount?.toString() ?: "-"
-
-        // 상태 배지 간단 스타일링
-        badgeStatus.text = item.status ?: OrderStatus.PLACED.name
-        badgeStatus.setBackgroundResource(
-            when (item.status?.let { OrderStatus.valueOf(it) } ?: OrderStatus.PLACED) {
-                OrderStatus.PLACED -> com.google.android.material.R.drawable.mtrl_chip_background
-                OrderStatus.APPROVED -> com.google.android.material.R.drawable.mtrl_chip_background
-                OrderStatus.REJECTED -> com.google.android.material.R.drawable.mtrl_chip_background
-                OrderStatus.SHIPPED -> com.google.android.material.R.drawable.mtrl_chip_background
-                OrderStatus.DELIVERED -> com.google.android.material.R.drawable.mtrl_chip_background
-            }
-        )
+        applyOrderStatusChip(badgeStatus, item.status)
 
         root.setOnClickListener { onClick(item) }
         btnCopy.setOnClickListener { item.id?.let(onCopyId) }

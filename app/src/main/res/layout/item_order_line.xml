@@ -1,38 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <data />
+
     <LinearLayout
-        android:orientation="horizontal"
-        android:padding="12dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingHorizontal="12dp"
+        android:paddingVertical="10dp">
 
         <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+
             <TextView
-                android:id="@+id/tvName"
+                android:id="@+id/txtName"
                 style="@style/TextAppearance.Material3.BodyLarge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                tools:text="삼겹살" />
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1"
+                tools:text="삼겹살 1kg" />
+
             <TextView
-                android:id="@+id/tvMeta"
-                style="@style/TextAppearance.Material3.BodyMedium"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:alpha="0.7"
-                tools:text="x10 kg" />
+                android:id="@+id/txtAmount"
+                style="@style/TextAppearance.Material3.TitleMedium"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                tools:text="34,000" />
         </LinearLayout>
 
         <TextView
-            android:id="@+id/tvAmount"
-            style="@style/TextAppearance.Material3.TitleMedium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            tools:text="120,000원" />
+            android:id="@+id/txtMeta"
+            style="@style/TextAppearance.Material3.BodySmall"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:alpha="0.75"
+            android:layout_marginTop="2dp"
+            tools:text="단가 17,000 × 2개 (kg)" />
     </LinearLayout>
 </layout>

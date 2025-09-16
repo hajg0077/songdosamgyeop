@@ -109,7 +109,7 @@
                                 style="@style/Widget.Material3.Chip.Filter"
                                 android:checkable="true"
                                 android:checked="true"
-                                android:text="PLACED" />
+                                android:text="PENDING" />
                             <com.google.android.material.chip.Chip
                                 android:id="@+id/chipApproved"
                                 style="@style/Widget.Material3.Chip.Filter"

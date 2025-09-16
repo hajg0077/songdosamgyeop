@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_branch_products" android:title="상품"/>
-    <item android:id="@+id/menu_branch_cart" android:title="장바구니"/>
-    <item android:id="@+id/menu_branch_history" android:title="내역"/>
-    <item android:id="@+id/menu_branch_settings" android:title="설정"/>
+    <item
+        android:id="@+id/branchProductsFragment"
+        android:title="@string/tab_products"
+        android:icon="@drawable/ic_products_24" />
+    <item
+        android:id="@+id/branchCartFragment"
+        android:title="@string/tab_cart"
+        android:icon="@drawable/ic_cart_24" />
     <item
         android:id="@+id/branchOrderHistoryFragment"
-        android:title="@string/branch_history_short"
+        android:title="@string/tab_history"
         android:icon="@drawable/ic_history_24" />
 </menu>

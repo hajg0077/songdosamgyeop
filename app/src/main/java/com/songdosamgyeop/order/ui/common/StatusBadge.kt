@@ -9,7 +9,7 @@ import com.songdosamgyeop.order.core.model.OrderStatus
 /** 주문 상태 -> 칩 스타일 적용 (Material3 팔레트) */
 object StatusBadge {
     fun apply(chip: Chip, status: OrderStatus) {
-        val (containerAttr: Int, textAttr: Int, labelRes: Int) = when (status) {
+        val triple: Triple<Int, Int, Int> = when (status) {
             OrderStatus.PENDING -> Triple(
                 com.google.android.material.R.attr.colorPrimaryContainer,
                 com.google.android.material.R.attr.colorOnPrimaryContainer,
@@ -35,7 +35,13 @@ object StatusBadge {
                 com.google.android.material.R.attr.colorOnSurface,
                 R.string.badge_delivered
             )
+            else -> Triple( // 혹시 enum에 새 값이 추가되거나 null일 때 fallback
+                com.google.android.material.R.attr.colorSurfaceVariant,
+                com.google.android.material.R.attr.colorOnSurfaceVariant,
+                R.string.badge_unknown
+            )
         }
+        val (containerAttr, textAttr, labelRes) = triple
         val bg = MaterialColors.getColor(chip, containerAttr)
         val fg = MaterialColors.getColor(chip, textAttr)
         chip.text = chip.context.getString(labelRes)
@@ -46,9 +52,9 @@ object StatusBadge {
     }
 }
 
-// 문자열 -> enum 변환 헬퍼 (어댑터에서 사용)
+/** 문자열 -> enum 변환 헬퍼 */
 fun applyOrderStatusChip(chip: Chip, status: String?) {
-    val enumVal = runCatching { OrderStatus.valueOf(status?.uppercase() ?: "") }.getOrNull()
-        ?: OrderStatus.PENDING
+    val enumVal = runCatching { OrderStatus.valueOf(status?.uppercase() ?: "") }
+        .getOrNull() ?: OrderStatus.PENDING
     StatusBadge.apply(chip, enumVal)
 }

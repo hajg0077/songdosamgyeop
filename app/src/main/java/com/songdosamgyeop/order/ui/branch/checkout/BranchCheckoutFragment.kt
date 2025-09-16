@@ -3,8 +3,10 @@ package com.songdosamgyeop.order.ui.branch.checkout
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.snackbar.Snackbar
@@ -14,8 +16,12 @@ import com.songdosamgyeop.order.databinding.FragmentBranchCheckoutBinding
 import com.songdosamgyeop.order.ui.branch.shop.BranchShopViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import java.text.NumberFormat
+import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
@@ -24,9 +30,9 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
     private lateinit var b: FragmentBranchCheckoutBinding
     private lateinit var adapter: BranchCheckoutAdapter
     private val nf = NumberFormat.getNumberInstance(Locale.KOREA)
-    private val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.KOREA)
+    private val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA)
 
-    private var requestedAt: Timestamp? = null
+    private var selectedDate: Timestamp? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         b = FragmentBranchCheckoutBinding.bind(view)
@@ -57,53 +63,80 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
             b.tvTotal.text = getString(R.string.order_amount_fmt, nf.format(amt))
         }
 
-        // 날짜 선택(희망 납품일) — UTC 보정
+        // 날짜 선택
         b.etDate.setOnClickListener {
             val picker = MaterialDatePicker.Builder.datePicker()
-                .setTitleText(getString(R.string.select_requested_date))
+                .setTitleText(R.string.select_requested_date)
                 .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
                 .build()
             picker.addOnPositiveButtonClickListener { utcMillis ->
-                val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-                cal.timeInMillis = utcMillis
-                // 로컬 표시 + 시분은 10:00으로 고정(가정)
-                val local = Calendar.getInstance().apply {
-                    set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 10, 0, 0)
-                    set(Calendar.MILLISECOND, 0)
-                }
-                requestedAt = Timestamp(local.time)
-                b.etDate.setText(sdf.format(local.time))
+                val date = Date(utcMillis)
+                b.etDate.setText(sdf.format(date))
+                b.tilDate.error = null
+                selectedDate = Timestamp(date)
             }
             picker.show(parentFragmentManager, "branchCheckoutDate")
         }
 
+        // 사용자가 직접 텍스트를 바꿨을 때 selectedDate 동기화 시도
+        b.etDate.doAfterTextChanged {
+            val text = it?.toString()?.trim().orEmpty()
+            if (text.isBlank()) {
+                selectedDate = null
+                b.tilDate.error = null
+            } else {
+                try {
+                    val parsed = sdf.parse(text)
+                    selectedDate = parsed?.let(::Timestamp)
+                    b.tilDate.error = null
+                } catch (_: ParseException) {
+                    selectedDate = null
+                    b.tilDate.error = getString(R.string.invalid_date_fmt, "yyyy-MM-dd")
+                }
+            }
+        }
+
+        // 주문 확정
         b.btnConfirm.setOnClickListener {
-            if (vm.isCartEmpty()) {
+            // 빈 카트 방지
+            val qty = vm.totalQty.value ?: 0
+            if (qty <= 0) {
                 Snackbar.make(b.root, R.string.cart_empty, Snackbar.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
+            // 날짜 유효성(입력칸이 비어있으면 null 허용, 값이 있으면 파싱 성공해야 함)
+            val dateText = b.etDate.text?.toString()?.trim().orEmpty()
+            if (dateText.isNotEmpty() && selectedDate == null) {
+                b.tilDate.error = getString(R.string.invalid_date_fmt, "yyyy-MM-dd")
+                return@setOnClickListener
+            }
+
             val note = b.etNote.text?.toString()?.takeIf { it.isNotBlank() }
+            // TODO: 실제 로그인 사용자/지점 정보 사용
+            val branchId = "BR001"
+            val branchName = "송도"
 
-            // TODO 실제 로그인/선택된 지점으로 치환
-            val branchId = "TODO_BRANCH_ID"
-            val branchName = "TODO_BRANCH_NAME"
+            vm.placeAll(branchId, branchName, note = note, requestedAt = selectedDate)
+        }
 
-            b.btnConfirm.isEnabled = false
-            vm.placeAll(
-                branchId = branchId,
-                branchName = branchName,
-                note = note,
-                requestedAt = requestedAt,
-                onSuccess = {
-                    Snackbar.make(b.root, R.string.order_placed, Snackbar.LENGTH_LONG).show()
-                    requireActivity().onBackPressedDispatcher.onBackPressed()
-                },
-                onError = {
-                    b.btnConfirm.isEnabled = true
-                    Snackbar.make(b.root, getString(R.string.order_failed_fmt, it.message ?: "unknown"), Snackbar.LENGTH_LONG).show()
+        // 주문 결과 이벤트 처리
+        viewLifecycleOwner.lifecycleScope.launch {
+            vm.placeEvents.collectLatest { ev ->
+                when (ev) {
+                    is BranchShopViewModel.PlaceEvent.Success -> {
+                        Snackbar.make(b.root, R.string.order_placed, Snackbar.LENGTH_LONG).show()
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    }
+                    is BranchShopViewModel.PlaceEvent.Failure -> {
+                        Snackbar.make(
+                            b.root,
+                            getString(R.string.order_failed_fmt, ev.message ?: "unknown"),
+                            Snackbar.LENGTH_LONG
+                        ).show()
+                    }
                 }
-            )
+            }
         }
     }
 

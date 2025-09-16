@@ -1,11 +1,12 @@
-// app/src/main/java/com/songdosamgyeop/order/ui/branch/history/BranchOrderDetailFragment.kt
 package com.songdosamgyeop.order.ui.branch.history
 
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -13,6 +14,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.data.model.OrderHeader
 import com.songdosamgyeop.order.databinding.FragmentBranchOrderDetailBinding
+import com.songdosamgyeop.order.ui.common.applyOrderStatusChip
 import dagger.hilt.android.AndroidEntryPoint
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -47,7 +49,6 @@ class BranchOrderDetailFragment : Fragment() {
         b.recycler.layoutManager = LinearLayoutManager(requireContext())
         adapter = BranchOrderLinesAdapter()
         b.recycler.adapter = adapter
-
         load(orderId ?: return)
     }
 
@@ -59,7 +60,7 @@ class BranchOrderDetailFragment : Fragment() {
             .addOnSuccessListener { doc ->
                 val header = doc.toObject(OrderHeader::class.java)
                 b.tvTitle.text = getString(R.string.order_title_fmt, orderId)
-                b.chipStatus.text = header?.status ?: "-"
+                applyOrderStatusChip(b.chipStatus, header?.status)
                 b.tvWhen.text = header?.placedAt?.toDate()?.let(sdf::format) ?: "-"
                 b.tvSummary.text = getString(
                     R.string.order_summary_fmt,
@@ -71,7 +72,9 @@ class BranchOrderDetailFragment : Fragment() {
                 b.tvTitle.setOnClickListener {
                     val cm = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     cm.setPrimaryClip(ClipData.newPlainText("orderId", orderId))
-                    com.google.android.material.snackbar.Snackbar.make(b.root, R.string.copied_order_id, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT).show()
+                    com.google.android.material.snackbar.Snackbar
+                        .make(b.root, R.string.copied_order_id, com.google.android.material.snackbar.Snackbar.LENGTH_SHORT)
+                        .show()
                 }
 
                 db.collection("orders").document(orderId).collection("items")

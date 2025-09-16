@@ -1,4 +1,3 @@
-// app/src/main/java/com/songdosamgyeop/order/ui/branch/history/BranchOrderHistoryViewModel.kt
 package com.songdosamgyeop.order.ui.branch.history
 
 import androidx.lifecycle.LiveData
@@ -8,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.songdosamgyeop.order.core.model.OrderStatus
@@ -27,7 +25,7 @@ data class BranchHistoryState(
     val items: List<OrderHeader> = emptyList(),
     val loadingMore: Boolean = false,
     val endReached: Boolean = false,
-    val noteSearchActive: Boolean = false // 메모 검색 시 상태칩 무시 안내용
+    val noteSearchActive: Boolean = false
 )
 
 @HiltViewModel
@@ -39,7 +37,8 @@ class BranchOrderHistoryViewModel @Inject constructor(
     private val _uiState = MutableLiveData(BranchHistoryState(loading = true))
     val uiState: LiveData<BranchHistoryState> = _uiState
 
-    private var period: Int = 1 // 0:none 1:today 2:7days 3:this month
+    // 기간: 0 없음, 1 오늘, 2 최근7일, 3 이번달
+    private var period: Int = 1
     private val statusEnabled = linkedSetOf(
         OrderStatus.PENDING, OrderStatus.APPROVED, OrderStatus.REJECTED, OrderStatus.SHIPPED, OrderStatus.DELIVERED
     )
@@ -76,7 +75,6 @@ class BranchOrderHistoryViewModel @Inject constructor(
 
     fun loadNext() {
         if (loadingNext || _uiState.value?.endReached == true) return
-        // 메모 검색 중엔 페이징도 지원 (쿼리 기반이라 동일)
         loadingNext = true
         _uiState.value = _uiState.value?.copy(loadingMore = true)
         query(next = true)
@@ -92,18 +90,17 @@ class BranchOrderHistoryViewModel @Inject constructor(
     private fun timeRange(): Pair<Timestamp?, Timestamp?> {
         val cal = Calendar.getInstance()
         return when (period) {
-            1 -> { // today
+            1 -> { // 오늘
                 cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
-                val start = Timestamp(cal.time)
-                cal.add(Calendar.DAY_OF_MONTH, 1)
+                val start = Timestamp(cal.time); cal.add(Calendar.DAY_OF_MONTH, 1)
                 start to Timestamp(cal.time)
             }
-            2 -> { // last 7 days
+            2 -> { // 7일
                 val end = Timestamp(Calendar.getInstance().time)
                 cal.add(Calendar.DAY_OF_YEAR, -7)
                 Timestamp(cal.time) to end
             }
-            3 -> { // this month
+            3 -> { // 이번달
                 cal.set(Calendar.DAY_OF_MONTH, 1)
                 cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0); cal.set(Calendar.MILLISECOND, 0)
                 val start = Timestamp(cal.time)
@@ -116,7 +113,6 @@ class BranchOrderHistoryViewModel @Inject constructor(
 
     private fun isOrderIdQuery(): String? {
         val q = searchQuery.trim()
-        // 간단 규칙: 8~28자 영숫자면 주문ID로 간주(문서ID 길이 가정), # 접두어 허용
         val s = if (q.startsWith("#")) q.drop(1) else q
         return if (s.length in 8..28 && s.all { it.isLetterOrDigit() }) s else null
     }
@@ -124,7 +120,6 @@ class BranchOrderHistoryViewModel @Inject constructor(
     private fun noteTokens(): List<String> {
         val raw = searchQuery.trim().lowercase()
         if (raw.isBlank()) return emptyList()
-        // 구두점/공백 분리, 1~10개 제한, 2글자 이상만
         return raw.split(Regex("[^a-z0-9가-힣]+"))
             .mapNotNull { it.trim() }
             .filter { it.length >= 2 }
@@ -145,9 +140,10 @@ class BranchOrderHistoryViewModel @Inject constructor(
         val idQuery = isOrderIdQuery()
         val tokens = noteTokens()
 
-        // 메모 검색(active)인 경우 상태칩(whereIn) 적용 불가 → 무시
+        // 메모 검색 활성화 시 상태칩(whereIn) 적용 불가 → 무시
         if (idQuery == null && tokens.isEmpty()) {
-            if (statusEnabled.isNotEmpty() && statusEnabled.size < OrderStatus.values().size) {
+            val allCount = OrderStatus.values().size
+            if (statusEnabled.isNotEmpty() && statusEnabled.size < allCount) {
                 q = q.whereIn("status", statusEnabled.map { it.name })
             }
         }
@@ -166,7 +162,7 @@ class BranchOrderHistoryViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 if (idQuery != null) {
-                    // 단건 조회 후 로컬 필터링
+                    // 주문ID 단건 조회 후 로컬 필터
                     val doc = db.collection("orders").document(idQuery).get().await()
                     val header = doc.toObject(OrderHeader::class.java)?.copy(id = doc.id)
                     val result = header?.takeIf { it.ownerUid == uid }?.let { h ->
@@ -178,24 +174,20 @@ class BranchOrderHistoryViewModel @Inject constructor(
                             end != null -> placed != null && placed < end
                             else -> true
                         }
-                        val inStatus = if (statusEnabled.size < OrderStatus.values().size)
+                        val allCount = OrderStatus.values().size
+                        val inStatus = if (statusEnabled.size < allCount)
                             h.status != null && statusEnabled.map { it.name }.contains(h.status) else true
                         if (inPeriod && inStatus) listOf(h) else emptyList()
                     } ?: emptyList()
 
                     _uiState.postValue(
                         BranchHistoryState(
-                            loading = false,
-                            items = result,
-                            loadingMore = false,
-                            endReached = true,
-                            noteSearchActive = false
+                            loading = false, items = result, loadingMore = false, endReached = true, noteSearchActive = false
                         )
                     )
                     return@launch
                 }
 
-                // 리스트 쿼리(메모 검색 or 일반)
                 var q = baseQuery(uid).limit(pageSize.toLong())
                 lastDoc?.let { q = q.startAfter(it) }
 

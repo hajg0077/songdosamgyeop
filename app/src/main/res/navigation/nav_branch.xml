@@ -1,3 +1,4 @@
+<!-- app/src/main/res/navigation/nav_branch.xml -->
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,25 +8,25 @@
     <fragment
         android:id="@+id/branchProductsFragment"
         android:name="com.songdosamgyeop.order.ui.branch.products.BranchProductsFragment"
-        android:label="상품">
+        android:label="@string/tab_products">
         <action
             android:id="@+id/action_branchProducts_to_branchCart"
-            app:destination="@id/branchCartFragment"/>
+            app:destination="@id/branchCartFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/branchCartFragment"
         android:name="com.songdosamgyeop.order.ui.branch.cart.BranchCartFragment"
-        android:label="장바구니">
+        android:label="@string/tab_cart">
         <action
             android:id="@+id/action_branchCart_to_branchCheckout"
-            app:destination="@id/branchCheckoutFragment"/>
+            app:destination="@id/branchCheckoutFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/branchCheckoutFragment"
         android:name="com.songdosamgyeop.order.ui.branch.checkout.BranchCheckoutFragment"
-        android:label="주문 확인" />
+        android:label="@string/checkout_title" />
 
     <fragment
         android:id="@+id/branchOrderHistoryFragment"
@@ -44,10 +45,4 @@
             android:name="orderId"
             app:argType="string" />
     </fragment>
-
-    <!-- 필요하면 설정 화면 추가 -->
-    <fragment
-        android:id="@+id/branchSettingsFragment"
-        android:name="com.songdosamgyeop.order.ui.branch.settings.BranchSettingsFragment"
-        android:label="설정" />
 </navigation>

@@ -3,8 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="match_parent" android:layout_height="match_parent"
     tools:context=".ui.branch.history.BranchOrderDetailFragment">
 
     <com.google.android.material.appbar.MaterialToolbar
@@ -16,79 +15,64 @@
         android:title="@string/branch_order_detail_title" />
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="12dp"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:padding="12dp"
         android:layout_marginTop="?attr/actionBarSize">
 
         <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginBottom="8dp">
-
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="14dp">
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="14dp">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical">
                     <TextView
                         android:id="@+id/tvTitle"
                         style="@style/TextAppearance.Material3.TitleMedium"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:textStyle="bold"
-                        tools:text="주문 abc123" />
-
+                        tools:text="주문 #1a2b3c4d"/>
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipStatus"
                         style="@style/Widget.Material3.Chip.Assist"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="상태" />
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:textAllCaps="true"
+                        tools:text="PENDING"/>
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvWhen"
                     style="@style/TextAppearance.Material3.BodyMedium"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:alpha="0.85"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    tools:text="2025-09-01 14:23" />
+                    tools:text="2025-09-01 14:23"/>
 
                 <TextView
                     android:id="@+id/tvSummary"
                     style="@style/TextAppearance.Material3.BodyMedium"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    tools:text="합계 34,000원 · 5개" />
+                    tools:text="합계 34,000원 · 5개"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_width="match_parent" android:layout_height="0dp"
             android:layout_weight="1"
-            tools:listitem="@layout/item_order_line"
-            tools:itemCount="3" />
+            tools:listitem="@layout/item_order_line" tools:itemCount="3"/>
 
         <TextView
             android:id="@+id/tvEmpty"
             style="@style/TextAppearance.Material3.BodyMedium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:gravity="center"
             android:text="@string/no_items"
-            android:visibility="gone" />
+            android:visibility="gone"/>
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
