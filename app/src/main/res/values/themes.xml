@@ -1,7 +1,5 @@
 <resources>
-    <!-- DayNight 말고 Light 고정 -->
     <style name="Theme.Songdo" parent="Theme.Material3.Light.NoActionBar">
-        <!-- 브랜드 컬러 -->
         <item name="colorPrimary">@color/brand_primary</item>
         <item name="colorOnPrimary">@color/brand_onPrimary</item>
         <item name="colorPrimaryContainer">@color/brand_primaryContainer</item>
@@ -10,24 +8,26 @@
         <item name="colorSecondary">@color/brand_secondary</item>
         <item name="colorOnSecondary">@color/brand_onSecondary</item>
 
-        <!-- ⬇️ 여기만 플랫폼 속성으로 변경 -->
         <item name="android:colorBackground">@color/brand_background</item>
         <item name="colorOnBackground">@color/brand_onBackground</item>
-
         <item name="colorSurface">@color/brand_surface</item>
         <item name="colorOnSurface">@color/brand_onSurface</item>
         <item name="colorOutline">@color/brand_outline</item>
 
-        <!-- Force Dark(안드10+) 비활성화 -->
-        <item name="android:forceDarkAllowed">false</item>
+        <item name="colorError">@color/brand_error</item>
+        <item name="colorOnError">@color/brand_onError</item>
 
-        <!-- 상태바/내비게이션 아이콘 가독성 -->
+        <item name="android:statusBarColor">@color/brand_primary</item>
+        <item name="android:navigationBarColor">@color/brand_surface</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
     </style>
-    <!-- Material3 "Filled" 별칭 (기본 버튼) -->
-    <style name="Widget.Material3.Button.FilledButton" parent="Widget.Material3.Button" />
 
-    <!-- 만약 layout에 사용됐다면 대비용: FilledTonal 별칭을 Tonal로 연결 -->
-    <style name="Widget.Material3.Button.FilledTonalButton" parent="Widget.Material3.Button.TonalButton" />
+    <!-- 스플래시: 12+는 Theme.SplashScreen 기능, 그 이하 버전은 그냥 색상/아이콘만 적용됨 -->
+    <style name="Theme.Songdo.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/brand_primary</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+        <item name="windowSplashScreenAnimationDuration">300</item>
+        <item name="postSplashScreenTheme">@style/Theme.Songdo</item>
+    </style>
 </resources>
