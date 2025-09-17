@@ -5,7 +5,7 @@ import android.graphics.Canvas
 import android.os.Bundle
 import android.view.View
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf // ✅ Safe Args 대신 번들 네비게이션
+import androidx.core.os.bundleOf
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -23,6 +23,8 @@ import androidx.core.graphics.drawable.toDrawable
 import com.songdosamgyeop.order.ui.common.SpacingItemDecoration
 import com.songdosamgyeop.order.ui.common.showError
 import com.songdosamgyeop.order.ui.common.showInfo
+import android.content.DialogInterface
+import com.songdosamgyeop.order.data.model.Registration // ✅ 명시 import (observe 타입에 필요)
 
 @AndroidEntryPoint
 class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_list) {
@@ -42,7 +44,6 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         val b = FragmentHqRegistrationListBinding.bind(view)
 
         adapter = RegistrationAdapter { id, reg ->
-            // ✅ Safe Args 제거: 번들로 직접 전달
             val actionId = R.id.action_hqRegistrationListFragment_to_hqRegistrationDetailFragment
             val args = bundleOf(
                 "id" to id,
@@ -57,13 +58,11 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         }
         b.recycler.adapter = adapter
 
-        // ✅ 통합된 목록 LiveData 사용
-        vm.list.observe(viewLifecycleOwner) { list ->
+        vm.list.observe(viewLifecycleOwner) { list: List<Pair<String, Registration>> ->
             adapter.submitList(list)
-            b.tvEmpty.visibility = if (list.isNullOrEmpty()) View.VISIBLE else View.GONE
+            b.tvEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
         }
 
-        // 스와이프
         val touchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
             0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
         ) {
@@ -84,7 +83,7 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                 } else {
                     showRejectDialog { reason ->
                         if (reason.isNullOrBlank()) {
-                            adapter.notifyItemChanged(pos) // ← 취소 시 복구
+                            adapter.notifyItemChanged(pos)
                         } else {
                             lastAction = LastAction(docId, ActionType.REJECT)
                             actionsVm.reject(docId, reason)
@@ -136,22 +135,18 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         })
         touchHelper.attachToRecyclerView(b.recycler)
 
-        // 결과 알림
         actionsVm.message.observe(viewLifecycleOwner) { res ->
             res.onSuccess { b.root.showInfo(it) }
                 .onFailure {
-                    // 서버 실패 → 목록 복구
                     vm.list.value?.let { current -> adapter.submitList(current) }
                     b.root.showError(it)
                 }
         }
 
-        // 검색창 연결
         b.etSearch.doOnTextChanged { text, _, _, _ ->
-            vm.setQuery(text?.toString().orEmpty())
+            vm.setQuery(text?.toString())
         }
 
-        // 상태 칩 연결
         b.chipPending.setOnClickListener { vm.setStatus(RegistrationStatus.PENDING) }
         b.chipApproved.setOnClickListener { vm.setStatus(RegistrationStatus.APPROVED) }
         b.chipRejected.setOnClickListener { vm.setStatus(RegistrationStatus.REJECTED) }
@@ -162,10 +157,11 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
 
         val fromHome = findNavController().previousBackStackEntry?.savedStateHandle
         fromHome?.getLiveData<Bundle>(KEY_INIT_FILTER)
-            ?.observe(viewLifecycleOwner) { payload ->
+            // ✅ observe 람다 파라미터 타입 명시
+            ?.observe(viewLifecycleOwner) { payload: Bundle ->
                 if (payload.getString("screen") == "registrations") {
                     payload.getString("status")?.let { statusStr ->
-                        vm.setStatus(com.songdosamgyeop.order.core.model.RegistrationStatus.valueOf(statusStr))
+                        vm.setStatus(RegistrationStatus.valueOf(statusStr))
                     }
                 }
                 fromHome.remove<Bundle>(KEY_INIT_FILTER)
@@ -173,18 +169,18 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
     }
 
     private fun removeFromList(docId: String) {
-        val newList = adapter.currentList.filterNot { it.first == docId }
+        val newList: List<Pair<String, Registration>> =
+            adapter.currentList.filterNot { it.first == docId }
         adapter.submitList(newList)
     }
 
     private fun showUndoSnackbar(b: FragmentHqRegistrationListBinding, msg: String) {
-        // ✅ 이상한 토큰 제거 (nvm - v)
         Snackbar.make(b.root, msg, Snackbar.LENGTH_LONG)
-            .setAction("되돌리기") {
+            // ✅ setAction 람다 파라미터 명시(오버로드 모호성 회피)
+            .setAction("되돌리기") { _: View ->
                 val a = lastAction ?: return@setAction
                 actionsVm.reset(a.docId)
-                // 임시 복구: 최신 상태 재적용
-                vm.list.value?.let { current -> adapter.submitList(current) } // ✅ pendingList → list
+                vm.list.value?.let { current -> adapter.submitList(current) }
             }
             .show()
     }
@@ -197,9 +193,12 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("신청서 반려")
             .setView(input)
-            .setNegativeButton("취소") { d, _ -> d.dismiss(); onResult(null) }
-            .setPositiveButton("반려") { d, _ ->
-                d.dismiss()
+            // ✅ 버튼 람다 파라미터 타입 명시
+            .setNegativeButton("취소") { dialog: DialogInterface, _ ->
+                dialog.dismiss(); onResult(null)
+            }
+            .setPositiveButton("반려") { dialog: DialogInterface, _ ->
+                dialog.dismiss()
                 onResult(input.text?.toString())
             }
             .show()

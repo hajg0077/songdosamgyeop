@@ -72,7 +72,7 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
             picker.addOnPositiveButtonClickListener { utcMillis ->
                 val date = Date(utcMillis)
                 b.etDate.setText(sdf.format(date))
-                b.tilDate.error = null
+                b.inputDate.error = null
                 selectedDate = Timestamp(date)
             }
             picker.show(parentFragmentManager, "branchCheckoutDate")
@@ -83,15 +83,15 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
             val text = it?.toString()?.trim().orEmpty()
             if (text.isBlank()) {
                 selectedDate = null
-                b.tilDate.error = null
+                b.inputDate.error = null
             } else {
                 try {
                     val parsed = sdf.parse(text)
                     selectedDate = parsed?.let(::Timestamp)
-                    b.tilDate.error = null
+                    b.inputDate.error = null
                 } catch (_: ParseException) {
                     selectedDate = null
-                    b.tilDate.error = getString(R.string.invalid_date_fmt, "yyyy-MM-dd")
+                    b.inputDate.error = getString(R.string.invalid_date_fmt, "yyyy-MM-dd")
                 }
             }
         }
@@ -108,7 +108,7 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
             // 날짜 유효성(입력칸이 비어있으면 null 허용, 값이 있으면 파싱 성공해야 함)
             val dateText = b.etDate.text?.toString()?.trim().orEmpty()
             if (dateText.isNotEmpty() && selectedDate == null) {
-                b.tilDate.error = getString(R.string.invalid_date_fmt, "yyyy-MM-dd")
+                b.inputDate.error = getString(R.string.invalid_date_fmt, "yyyy-MM-dd")
                 return@setOnClickListener
             }
 

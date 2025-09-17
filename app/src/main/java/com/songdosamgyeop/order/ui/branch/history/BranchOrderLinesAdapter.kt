@@ -26,12 +26,12 @@ class BranchOrderLinesAdapter :
         private val money: NumberFormat
     ) : RecyclerView.ViewHolder(b.root) {
         fun bind(item: OrderLineUI) {
-            b.txtName.text = item.name
+            b.tvName.text = item.name
             val unit = item.unit.ifBlank { "-" }
             val unitPrice = money.format(item.price)
             val amt = money.format(item.price * item.qty)
-            b.txtMeta.text = "단가 $unitPrice × ${item.qty}개 ($unit)"
-            b.txtAmount.text = amt
+            b.tvUnit.text = "단가 $unitPrice × ${item.qty}개 ($unit)"
+            b.tvLineTotal.text = amt
         }
     }
 

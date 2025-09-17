@@ -73,7 +73,8 @@ class OrdersRepository @Inject constructor(
                     val m = d.data ?: emptyMap<String, Any?>()
                     CartItem(
                         productId = d.id,
-                        name = m["name"] as? String ?: "",
+                        productName = m["productName"] as? String ?: "",
+                        brandId = m["brandId"]  as? String ?: "-",
                         unitPrice = (m["unitPrice"] as? Number)?.toLong() ?: 0L,
                         qty = (m["qty"] as? Number)?.toInt() ?: 0
                     )
@@ -207,6 +208,7 @@ class OrdersRepository @Inject constructor(
                 val m = d.data ?: emptyMap<String, Any?>()
                 com.songdosamgyeop.order.data.model.OrderRow(
                     id = d.id,
+                    brandId     = m["brandId"]  as? String ?: "-",
                     branchId = m["branchId"] as? String ?: "-",
                     branchName = m["branchName"] as? String,
                     ownerUid  = m["ownerUid"] as? String ?: u,
@@ -232,11 +234,13 @@ class OrdersRepository @Inject constructor(
             trySend(
                 com.songdosamgyeop.order.data.model.OrderHeader(
                     id = snap.id,
+                    brandId = m["brandId"]  as? String ?: "-",
                     branchId = m["branchId"] as? String ?: "-",
+                    branchName = m["branchName"]  as? String ?: "-",
                     ownerUid = m["ownerUid"] as? String ?: "",
                     status = m["status"] as? String ?: "UNKNOWN",
-                    placedAt = m["placedAt"] as? com.google.firebase.Timestamp,
-                    createdAt = m["createdAt"] as? com.google.firebase.Timestamp,
+                    placedAt = m["placedAt"] as? Timestamp,
+                    createdAt = m["createdAt"] as? Timestamp,
                     itemsCount = (m["itemsCount"] as? Number)?.toInt(),
                     totalAmount = (m["totalAmount"] as? Number)?.toLong()
                 )
@@ -286,12 +290,13 @@ class OrdersRepository @Inject constructor(
                 val m = d.data ?: emptyMap<String, Any?>()
                 com.songdosamgyeop.order.data.model.OrderRow(
                     id = d.id,
+                    brandId     = m["brandId"]  as? String ?: "-",
                     branchId = m["branchId"] as? String ?: "-",
                     branchName = m["branchName"] as? String,
                     ownerUid  = m["ownerUid"] as? String ?: "",
                     status    = m["status"] as? String ?: "UNKNOWN",
-                    placedAt  = m["placedAt"] as? com.google.firebase.Timestamp,
-                    createdAt = m["createdAt"] as? com.google.firebase.Timestamp,
+                    placedAt  = m["placedAt"] as? Timestamp,
+                    createdAt = m["createdAt"] as? Timestamp,
                     itemsCount = (m["itemsCount"] as? Number)?.toInt(),
                     totalAmount = (m["totalAmount"] as? Number)?.toLong()
                 )

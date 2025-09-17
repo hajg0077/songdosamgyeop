@@ -5,7 +5,9 @@ import com.google.firebase.Timestamp
 /** HQ 주문 상세 헤더(상단 요약용) */
 data class OrderHeader(
     val id: String,
+    val brandId: String,
     val branchId: String,
+    val branchName: String?,
     val ownerUid: String,
     val status: String,
     val placedAt: Timestamp?,

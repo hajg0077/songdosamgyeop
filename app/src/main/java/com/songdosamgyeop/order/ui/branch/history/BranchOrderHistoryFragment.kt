@@ -105,16 +105,14 @@ class BranchOrderHistoryFragment : Fragment() {
             binding.empty.isVisible = !s.loading && s.items.isEmpty()
             adapter.submitList(s.items)
 
-            binding.footerCount.text = getString(R.string.order_count_fmt, s.items.size)
-            val total = s.items.sumOf { it.totalAmount ?: 0L }
-            binding.footerAmount.text = getString(R.string.order_amount_fmt, moneyFormat.format(total))
-
             binding.loadMore.isVisible = s.loadingMore
             binding.endBadge.isVisible = !s.loading && !s.loadingMore && s.endReached && s.items.isNotEmpty()
 
-            // 지사명 검색 배지(기간 무시 알림)
-            binding.noteSearchBadge.isVisible = s.branchSearchActive
-            if (s.branchSearchActive) {
+            val queryText = binding.searchEdit.text?.toString()?.trim().orEmpty()
+            val branchSearchActive = queryText.isNotEmpty() && !queryText.startsWith("#")
+
+            binding.noteSearchBadge.isVisible = branchSearchActive
+            if (branchSearchActive) {
                 binding.noteSearchBadge.text = getString(R.string.branch_search_hint_period_disabled)
             }
         }

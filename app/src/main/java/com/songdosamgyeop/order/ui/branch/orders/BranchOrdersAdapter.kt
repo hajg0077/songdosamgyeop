@@ -30,7 +30,8 @@ class BranchOrdersAdapter(
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.KOREA)
 
         h.b.tvTitle.text = "주문 ${row.id.take(8)}"
-        val whenStr = row.placedAtMs?.let { sdf.format(Date(it)) } ?: "-"
+        val whenStr = row.placedAt?.let(sdf::format)
+            ?: row.createdAt?.let(sdf::format) ?: "-"
         val amount = row.totalAmount?.let { "${nf.format(it)}원" } ?: "—"
         val count  = row.itemsCount?.let { "${it}개" } ?: "—"
         h.b.tvSubtitle.text = "$whenStr · $count · $amount"

@@ -3,7 +3,7 @@ package com.songdosamgyeop.order.ui.hq.orders.detail
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import com.google.firebase.Timestamp
+import com.songdosamgyeop.order.data.model.OrderLine
 import com.songdosamgyeop.order.data.repo.OrdersRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Date
@@ -23,7 +23,7 @@ class HqOrderDetailViewModel @Inject constructor(
     data class Header(
         val id: String,
         val branchId: String,
-        val brandId: String?,
+        val brandId: String?,   // 데이터 소스가 null일 수 있어 안전하게 nullable 유지
         val status: String?,
         val itemsCount: Int?,
         val totalAmount: Long?,
@@ -31,12 +31,16 @@ class HqOrderDetailViewModel @Inject constructor(
         val createdAt: Date?
     )
 
-    data class ItemRow(
-        val name: String,
-        val unitPrice: Long,
-        val qty: Int,
-        val lineTotal: Long
-    )
+    /** 라인/헤더 등 섹션 지원을 위한 ItemRow (지금은 Line만 사용) */
+    sealed class ItemRow {
+        data class Line(val line: OrderLine) : ItemRow() {
+            val name: String get() = line.name
+            val unitPrice: Long get() = line.unitPrice
+            val qty: Int get() = line.qty
+            val lineTotal: Long get() = line.unitPrice * line.qty
+        }
+        // 필요 시 섹션 헤더 등 추가 가능: data class Section(val title: String) : ItemRow()
+    }
 
     /** 헤더 구독 (Timestamp → Date 변환) */
     val header = ordersRepo.observeOrderHeader(orderId).map { o ->
@@ -52,15 +56,8 @@ class HqOrderDetailViewModel @Inject constructor(
         )
     }.asLiveData()
 
-    /** 아이템 구독 */
+    /** 아이템 구독: OrderLine → ItemRow.Line 로 변환 */
     val items = ordersRepo.observeOrderItems(orderId).map { list ->
-        list.map { i ->
-            ItemRow(
-                name = i.name,
-                unitPrice = i.unitPrice,
-                qty = i.qty,
-                lineTotal = i.unitPrice * i.qty
-            )
-        }
+        list.map { ItemRow.Line(it) }
     }.asLiveData()
 }

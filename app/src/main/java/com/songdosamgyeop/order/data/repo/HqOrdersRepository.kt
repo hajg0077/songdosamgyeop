@@ -28,11 +28,13 @@ class HqOrdersRepository @Inject constructor(
             trySend(
                 OrderHeader(
                     id = snap.id,
+                    brandId = m["brandId"]  as? String ?: "-",
                     branchId = m["branchId"] as? String ?: "-",
+                    branchName = m["branchName"]  as? String ?: "-",
                     ownerUid = m["ownerUid"] as? String ?: "-",
                     status = m["status"] as? String ?: "UNKNOWN",
-                    placedAt = m["placedAt"] as? com.google.firebase.Timestamp,
-                    createdAt = m["createdAt"] as? com.google.firebase.Timestamp,
+                    placedAt = m["placedAt"] as? Timestamp,
+                    createdAt = m["createdAt"] as? Timestamp,
                     itemsCount = (m["itemsCount"] as? Number)?.toInt(),
                     totalAmount = (m["totalAmount"] as? Number)?.toLong()
                 )
@@ -98,12 +100,13 @@ class HqOrdersRepository @Inject constructor(
                 val m = d.data ?: emptyMap<String, Any?>()
                 OrderRow(
                     id = d.id,
+                    brandId     = m["brandId"]  as? String ?: "-",
                     branchId = m["branchId"] as? String ?: "-",
                     branchName = m["branchName"] as? String,
                     ownerUid  = m["ownerUid"] as? String ?: "-",
                     status    = m["status"] as? String ?: "UNKNOWN",
-                    placedAt  = m["placedAt"] as? com.google.firebase.Timestamp,
-                    createdAt = m["createdAt"] as? com.google.firebase.Timestamp,
+                    placedAt  = m["placedAt"] as? Timestamp,
+                    createdAt = m["createdAt"] as? Timestamp,
                     itemsCount = (m["itemsCount"] as? Number)?.toInt(),
                     totalAmount = (m["totalAmount"] as? Number)?.toLong()
                 )

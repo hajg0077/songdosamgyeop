@@ -3,6 +3,7 @@ package com.songdosamgyeop.order.ui.hq.registrationlist
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.SavedStateHandle
 import com.songdosamgyeop.order.core.model.RegistrationStatus
 import com.songdosamgyeop.order.data.repo.RegistrationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +20,8 @@ import kotlinx.coroutines.flow.flatMapLatest
  */
 @HiltViewModel
 class HqRegistrationListViewModel @Inject constructor(
-    private val repo: RegistrationRepository
+    private val repo: RegistrationRepository,
+    private val saved: SavedStateHandle,          // ✅ SavedStateHandle 주입
 ) : ViewModel() {
 
     private companion object {
@@ -27,31 +29,45 @@ class HqRegistrationListViewModel @Inject constructor(
         const val K_QUERY  = "regs.query"
     }
 
-    private val status = MutableStateFlow(
-        saved.get<String>(K_STATUS)?.let { RegistrationStatus.valueOf(it) }
-            ?: RegistrationStatus.PENDING
-    )
-    private val query  = MutableStateFlow(saved.get<String?>(K_QUERY))
+    // ✅ 제네릭 명시 + SavedState 복원 (잘못된 문자열 방지용 runCatching)
+    private val status: MutableStateFlow<RegistrationStatus> =
+        MutableStateFlow(
+            saved.get<String>(K_STATUS)
+                ?.let { runCatching { RegistrationStatus.valueOf(it) }.getOrNull() }
+                ?: RegistrationStatus.PENDING
+        )
+
+    // ✅ 제네릭 명시 (nullable 검색어)
+    private val query: MutableStateFlow<String?> =
+        MutableStateFlow(saved.get<String>(K_QUERY))
+
     fun setStatus(s: RegistrationStatus) {
         status.value = s
-        saved[K_STATUS] = s.name
+        saved.set(K_STATUS, s.name)                 // ✅ set 명시적 사용
     }
+
     fun setQuery(q: String?) {
         query.value = q
-        saved[K_QUERY] = q
+        saved.set(K_QUERY, q)                       // ✅ set 명시적 사용
     }
 
     /** 당겨서 새로고침 등 강제 재시작용 */
     fun refresh() {
+        // 같은 값 재할당로 플로우 재발행
         status.value = status.value
         query.value = query.value
     }
+
     /** 외부에서 구독할 목록 LiveData (Pair<docId, Registration>) */
     @OptIn(FlowPreview::class)
     val list = combine(
         status,
-        query.debounce(300) // 과도한 쿼리 방지
-    ) { st, q -> st to q.trim() }
-        .flatMapLatest { (st, q) -> repo.subscribeList(st, q.ifBlank { null }) }
-        .asLiveData(viewModelScope.coroutineContext)
+        query.debounce(300)                         // 과도한 쿼리 방지
+    ) { st: RegistrationStatus, q: String? ->
+        st to q?.trim()                             // ✅ null-safe
+    }.flatMapLatest { (st, qTrimmed) ->
+        // 공백이면 null로 치환
+        val qOrNull: String? = qTrimmed.takeUnless { it.isNullOrBlank() }
+        repo.subscribeList(st, qOrNull)             // ✅ Repository 시그니처: (RegistrationStatus, String?)
+    }.asLiveData(viewModelScope.coroutineContext)
 }
