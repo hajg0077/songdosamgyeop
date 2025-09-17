@@ -69,10 +69,9 @@ class BranchProductsFragment : Fragment(R.layout.fragment_products) {
         }
 
         b.btnPlace.setOnClickListener {
-            vm.placeAll()
-            Snackbar.make(b.root, "브랜드별로 주문이 생성되었습니다.", Snackbar.LENGTH_SHORT).show()
+            vm.placeAllUsingCurrentUser()
+            Snackbar.make(b.root, "주문이 생성되었습니다.", Snackbar.LENGTH_SHORT).show()
         }
-
         b.toolbar.setNavigationOnClickListener {
             requireActivity().onBackPressedDispatcher.onBackPressed()
         }
