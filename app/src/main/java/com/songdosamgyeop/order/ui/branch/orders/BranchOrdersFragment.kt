@@ -26,7 +26,7 @@ class BranchOrdersFragment : Fragment(R.layout.fragment_branch_orders) {
         val b = FragmentBranchOrdersBinding.bind(view)
         adapter = BranchOrdersAdapter { orderId ->
             findNavController().navigate(
-                R.id.action_branchOrders_to_branchOrderDetail,
+                R.id.action_branchOrderHistory_to_branchOrderDetail,
                 bundleOf("orderId" to orderId)
             )
         }

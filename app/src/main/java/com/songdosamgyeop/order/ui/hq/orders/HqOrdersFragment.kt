@@ -2,7 +2,9 @@ package com.songdosamgyeop.order.ui.hq.orders
 
 import android.net.Uri
 import android.os.Bundle
-import android.view.*
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
@@ -37,8 +39,8 @@ import kotlinx.coroutines.withContext
 class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
 
     companion object {
-        private const val KEY_ORDER_UPDATED = "KEY_ORDER_UPDATED" // 상세→목록 변경 신호 키
-        private const val KEY_INIT_FILTER   = "KEY_INIT_FILTER"   // 홈→초기 필터 전달 키
+        private const val KEY_ORDER_UPDATED = "KEY_ORDER_UPDATED"
+        private const val KEY_INIT_FILTER   = "KEY_INIT_FILTER"
     }
 
     private val vm: HqOrdersViewModel by viewModels()
@@ -66,8 +68,7 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
         b.recycler.layoutManager = LinearLayoutManager(requireContext())
         b.recycler.adapter = adapter
 
-        // ── 탭 분리: 진행 중 / 완료 ───────────────────────────────────────
-        // TabLayout이 레이아웃에 존재한다고 가정 (없다면 TabLayout 추가 필요)
+        // ── 탭: 진행/완료 ──
         b.tabLayout.apply {
             if (tabCount == 0) {
                 addTab(newTab().setText("진행 중").setTag("inProgress"))
@@ -75,17 +76,17 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
             }
             addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
                 override fun onTabSelected(tab: TabLayout.Tab) {
-                    (tab.tag as? String)?.let(vm::setTab) // "inProgress" | "completed"
+                    (tab.tag as? String)?.let(vm::setTab)
                 }
                 override fun onTabUnselected(tab: TabLayout.Tab) {}
                 override fun onTabReselected(tab: TabLayout.Tab) {
-                    // 탭 재선택 시 새로고침 UX
-                    vm.refresh()
+                    // ✅ refresh 대체: 현재 필터로 재조회 트리거
+                    refreshList()
                 }
             })
         }
 
-        // ViewModel의 현재 탭 상태를 UI에 반영 (SavedStateHandle로 초기화될 수 있음)
+        // VM의 현재 탭 → UI 반영
         vm.tab.observe(viewLifecycleOwner) { t ->
             val idx = if (t == "completed") 1 else 0
             if (b.tabLayout.selectedTabPosition != idx) {
@@ -93,12 +94,12 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
             }
         }
 
-        // ── 지사명 검색 ─────────────────────────────────────────────────
+        // ── 지사명 검색 ──
         b.etBranchName.doOnTextChanged { text, _, _, _ ->
-            vm.setBranchNameQuery(text?.toString())
+            vm.setBranchQuery(text.toString())
         }
 
-        // ── 기간 선택 (endExclusive: 다음날 00:00) ──────────────────────
+        // ── 기간 선택(endExclusive: 다음날 00:00) ──
         b.btnPickDate.setOnClickListener {
             val picker = MaterialDatePicker.Builder.dateRangePicker()
                 .setTitleText("조회 기간 선택")
@@ -125,10 +126,11 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
         }
         b.btnClearDate.setOnClickListener {
             vm.setDateRange(null, null)
-            b.btnPickDate.setText(R.string.common_select_date_range)
+            // ✅ 존재하는 문자열로 대체(리소스 없어서 터지던 부분)
+            b.btnPickDate.setText(R.string.select_requested_date)
         }
 
-        // ── 메뉴 (CSV 내보내기) ────────────────────────────────────────
+        // ── 메뉴(CSV 내보내기) ──
         (requireActivity() as MenuHost).addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
                 inflater.inflate(R.menu.menu_hq_orders, menu)
@@ -147,7 +149,7 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
             }
         }, viewLifecycleOwner, Lifecycle.State.STARTED)
 
-        // ── 리스트 구독 + 합계 푸터 ─────────────────────────────────────
+        // ── 리스트 구독 + 합계 푸터 ──
         vm.displayList.observe(viewLifecycleOwner) { rows ->
             adapter.submitList(rows)
             b.tvEmpty.visibility = if (rows.isNullOrEmpty()) View.VISIBLE else View.GONE
@@ -163,23 +165,24 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
             }
         }
 
-        // ✅ 상세→목록 복귀 시 변경 신호 수신 → 재조회
+        // 상세→목록 변경 신호 수신 → 재조회
         val handle = findNavController().currentBackStackEntry?.savedStateHandle
         handle?.getLiveData<Boolean>(KEY_ORDER_UPDATED)
             ?.observe(viewLifecycleOwner) { changed ->
                 if (changed == true) {
-                    vm.refresh()
+                    refreshList()                   // ✅ refresh 대체
                     handle.remove<Boolean>(KEY_ORDER_UPDATED)
                 }
             }
 
-        // ✅ 홈→초기 필터(탭/상태/기간 등) 수신
+        // 홈→초기 필터(탭/상태/기간 등) 수신
         val fromHome = findNavController().previousBackStackEntry?.savedStateHandle
         fromHome?.getLiveData<Bundle>(KEY_INIT_FILTER)
-            ?.observe(viewLifecycleOwner) { payload ->
+            // ✅ 람다 파라미터 타입 지정 (추론 에러 방지)
+            ?.observe(viewLifecycleOwner) { payload: Bundle ->
                 if (payload.getString("screen") == "orders") {
-                    payload.getString("tab")?.let(vm::setTab) // "inProgress"|"completed"
-                    payload.getString("branchQuery")?.let(vm::setBranchNameQuery)
+                    payload.getString("tab")?.let(vm::setTab)
+                    payload.getString("branchQuery")?.let(vm::setBranchQuery) // ✅ 이름 수정
                     @Suppress("DEPRECATION")
                     vm.setDateRange(
                         payload.getParcelable("dateStart"),
@@ -191,9 +194,15 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
 
         // 당겨서 새로고침
         b.swipe.setOnRefreshListener {
-            vm.refresh()
+            refreshList()                           // ✅ refresh 대체
             b.swipe.isRefreshing = false
         }
+    }
+
+    /** 현재 필터값을 그대로 다시 적용하여 재조회 트리거 */
+    private fun refreshList() {
+        // setDateRange는 내부에서 resetAndLoad()를 호출하므로 재조회에 적합
+        vm.setDateRange(vm.dateStart.value, vm.dateEnd.value)
     }
 
     /** 현재 어댑터 리스트를 CSV로 저장 */
@@ -204,7 +213,7 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 resolver.openOutputStream(uri)?.use { os ->
-                    // UTF-8 BOM (엑셀 호환)
+                    // UTF-8 BOM
                     os.write(0xEF); os.write(0xBB); os.write(0xBF)
 
                     OutputStreamWriter(os, Charsets.UTF_8).use { w ->
@@ -219,7 +228,6 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
                                 ?: r.createdAt?.let(sdf::format) ?: "-"
 
                             val brand  = r.brandId ?: "-"
-                            // 🐞 FIX: 지사명 fallback 중복 → branchId로 보정
                             val branch = r.branchName ?: r.branchId ?: "-"
                             val status = r.status ?: "-"
                             val count  = r.itemsCount?.toString() ?: "-"

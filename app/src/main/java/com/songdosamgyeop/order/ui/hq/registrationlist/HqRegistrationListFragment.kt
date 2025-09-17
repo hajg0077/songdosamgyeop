@@ -24,7 +24,8 @@ import com.songdosamgyeop.order.ui.common.SpacingItemDecoration
 import com.songdosamgyeop.order.ui.common.showError
 import com.songdosamgyeop.order.ui.common.showInfo
 import android.content.DialogInterface
-import com.songdosamgyeop.order.data.model.Registration // ✅ 명시 import (observe 타입에 필요)
+// ❌ 지우기: import com.songdosamgyeop.order.data.model.Registration
+import com.songdosamgyeop.order.data.repo.Registration as RepoRegistration  // ✅ alias 로 통일
 
 @AndroidEntryPoint
 class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_list) {
@@ -58,7 +59,8 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         }
         b.recycler.adapter = adapter
 
-        vm.list.observe(viewLifecycleOwner) { list: List<Pair<String, Registration>> ->
+        // 🔧 여기서 repo 타입으로 맞춤
+        vm.list.observe(viewLifecycleOwner) { list: List<Pair<String, RepoRegistration>> ->
             adapter.submitList(list)
             b.tvEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
         }
@@ -157,7 +159,6 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
 
         val fromHome = findNavController().previousBackStackEntry?.savedStateHandle
         fromHome?.getLiveData<Bundle>(KEY_INIT_FILTER)
-            // ✅ observe 람다 파라미터 타입 명시
             ?.observe(viewLifecycleOwner) { payload: Bundle ->
                 if (payload.getString("screen") == "registrations") {
                     payload.getString("status")?.let { statusStr ->
@@ -169,14 +170,13 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
     }
 
     private fun removeFromList(docId: String) {
-        val newList: List<Pair<String, Registration>> =
+        val newList: List<Pair<String, RepoRegistration>> =
             adapter.currentList.filterNot { it.first == docId }
         adapter.submitList(newList)
     }
 
     private fun showUndoSnackbar(b: FragmentHqRegistrationListBinding, msg: String) {
         Snackbar.make(b.root, msg, Snackbar.LENGTH_LONG)
-            // ✅ setAction 람다 파라미터 명시(오버로드 모호성 회피)
             .setAction("되돌리기") { _: View ->
                 val a = lastAction ?: return@setAction
                 actionsVm.reset(a.docId)
@@ -193,7 +193,6 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("신청서 반려")
             .setView(input)
-            // ✅ 버튼 람다 파라미터 타입 명시
             .setNegativeButton("취소") { dialog: DialogInterface, _ ->
                 dialog.dismiss(); onResult(null)
             }

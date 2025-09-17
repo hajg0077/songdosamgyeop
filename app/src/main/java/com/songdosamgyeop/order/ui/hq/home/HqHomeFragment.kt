@@ -124,27 +124,4 @@ class HqHomeFragment : Fragment(R.layout.fragment_hq_home) {
         )
         findNavController().navigate(destId)
     }
-
-    private fun openOrdersCompleted() {
-        findNavController().navigate(R.id.action_home_to_hqOrders)
-        findNavController().currentBackStackEntry?.savedStateHandle?.set(
-            "KEY_INIT_FILTER",
-            Bundle().apply {
-                putString("screen", "orders")
-                putString("tab", HqOrdersViewModel.TAB_COMPLETED) // "completed"
-            }
-        )
-    }
-
-    private fun openOrdersInProgress(branchKeyword: String? = null) {
-        findNavController().navigate(R.id.action_home_to_hqOrders)
-        findNavController().currentBackStackEntry?.savedStateHandle?.set(
-            "KEY_INIT_FILTER",
-            Bundle().apply {
-                putString("screen", "orders")
-                putString("tab", HqOrdersViewModel.TAB_IN_PROGRESS) // "inProgress"
-                branchKeyword?.let { putString("branchQuery", it) }
-            }
-        )
-    }
 }
