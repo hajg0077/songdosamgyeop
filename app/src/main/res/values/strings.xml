@@ -43,17 +43,11 @@
     <string name="period_this_month">이번 달</string>
     <string name="no_orders">주문이 없습니다.</string>
     <string name="order_count_fmt">건수: %1$d</string>
-    <string name="order_amount_fmt">합계: %1$s원</string>
     <string name="copy_order_id">주문ID 복사</string>
     <string name="copied_order_id">주문 ID를 복사했습니다</string>
     <string name="order_header">주문 헤더</string>
     <string name="order_items">주문 품목</string>
     <string name="no_items">품목이 없습니다.</string>
-
-    <string name="select_requested_date">희망 납품일 선택</string>
-    <string name="cart_empty">장바구니가 비었습니다.</string>
-    <string name="order_placed">주문이 접수되었습니다.</string>
-    <string name="order_failed_fmt">주문 실패: %1$s</string>
 
     <string name="order_title_fmt">주문 %1$s</string>
     <string name="order_summary_fmt">합계 %1$s원 · %2$d개</string>
@@ -62,8 +56,6 @@
     <string name="search_hint">주문ID(#포함 가능) 또는 메모 검색</string>
     <string name="clear">지움</string>
     <string name="note_search_hint_status_disabled">메모 검색에서는 상태 필터가 적용되지 않습니다.</string>
-
-    <string name="invalid_date_fmt">날짜 형식이 올바르지 않습니다. 예: %1$s</string>
 
     <string name="tab_products">상품</string>
     <string name="tab_cart">장바구니</string>
@@ -81,6 +73,20 @@
     <string name="logout">로그아웃</string>
     <string name="logged_out">로그아웃되었습니다.</string>
     <string name="not_available">N/A</string>
+
+
+    <string name="checkout_title_base">주문 결제</string>
+    <string name="checkout_requested_date_hint">요청일 선택(선택)</string>
+    <string name="checkout_note_hint">요청 메모(선택)</string>
+    <string name="checkout_confirm">주문 확정</string>
+
+    <string name="order_amount_zero">총 0원</string>
+    <string name="order_amount_fmt">총 %1$s원</string>
+    <string name="select_requested_date">요청일 선택</string>
+    <string name="invalid_date_fmt">%1$s 형식으로 입력하세요</string>
+    <string name="cart_empty">장바구니가 비었습니다</string>
+    <string name="order_placed">주문이 접수되었습니다</string>
+    <string name="order_failed_fmt">주문 실패: %1$s</string>
 
     <!-- 검색/안내 문구 -->
     <string name="branch_search_hint_period_disabled">지사명 검색에서는 기간 필터가 적용되지 않습니다.</string>

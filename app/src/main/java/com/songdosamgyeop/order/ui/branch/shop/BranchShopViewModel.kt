@@ -3,12 +3,13 @@ package com.songdosamgyeop.order.ui.branch.shop
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Timestamp
 import com.songdosamgyeop.order.core.model.BrandId
 import com.songdosamgyeop.order.data.model.CartItem
 import com.songdosamgyeop.order.data.model.Product
 import com.songdosamgyeop.order.data.repo.BranchOrdersRepository
 import com.songdosamgyeop.order.data.repo.ProductsRepository
-import com.songdosamgyeop.order.data.repo.CurrentUserRepository   // ✅ 추가
+import com.songdosamgyeop.order.data.repo.CurrentUserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.BufferOverflow
@@ -25,8 +26,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class BranchShopViewModel @Inject constructor(
     private val productRepo: ProductsRepository,
-    private val ordersRepo: BranchOrdersRepository,
-    private val currentUserRepo: CurrentUserRepository,     // ✅ 추가
+    private val ordersRepo: BranchOrdersRepository,   // ✅ createOrder가 orderId 반환으로 변경됨
+    private val currentUserRepo: CurrentUserRepository,
 ) : ViewModel() {
 
     private val brand = MutableStateFlow(BrandId.SONGDO)
@@ -87,15 +88,16 @@ class BranchShopViewModel @Inject constructor(
     }
 
     // ==== 주문 생성 결과 이벤트 ====
+    /** ✅ 통합결제에서 결제 진입에 필요한 orderId를 넘기도록 Success가 orderId를 보유 */
     sealed class PlaceEvent {
-        object Success : PlaceEvent()
+        data class Success(val orderId: String) : PlaceEvent()
         data class Failure(val message: String?) : PlaceEvent()
     }
     val placeEvents = MutableSharedFlow<PlaceEvent>(
         replay = 0, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    /** 현재 로그인 사용자의 지점 정보로 주문 생성 (하드코딩 제거) */
+    /** 현재 로그인 사용자의 지점 정보로 통합주문 1건 생성 */
     fun placeAllUsingCurrentUser(
         note: String? = null,
         requestedAt: com.google.firebase.Timestamp? = null
@@ -112,38 +114,30 @@ class BranchShopViewModel @Inject constructor(
                 placeEvents.emit(PlaceEvent.Failure("NO_BRANCH_INFO"))
                 return@launch
             }
-            // 기존 메서드 재사용
+            // ✅ 단일 주문으로 생성하도록 통일
             placeAll(info.branchId, info.branchName, note, requestedAt)
         }
     }
 
-    /** 브랜드별로 주문 생성 후 장바구니 비움 */
-    fun placeAll(
-        branchId: String,
-        branchName: String,
-        note: String? = null,
-        requestedAt: com.google.firebase.Timestamp? = null
-    ) {
+    /**
+     * ✅ 통합주문 + 단일결제:
+     * - 레포의 createOrder(...)가 **생성된 orderId(String)** 를 반환
+     * - 장바구니 전체 라인을 한 번에 CartItem 리스트로 전달
+     * - 성공 시 PlaceEvent.Success(orderId) 방출
+     */
+    fun placeAll(branchId: String, branchName: String, note: String? = null, requestedAt: Timestamp? = null) {
         val lines = _cart.value.values.toList()
         if (lines.isEmpty()) {
             viewModelScope.launch { placeEvents.emit(PlaceEvent.Failure("EMPTY_CART")) }
             return
         }
-
+        val items = lines.map { it.toCartItem() }
         viewModelScope.launch {
             runCatching {
-                lines.groupBy { it.brandId ?: "COMMON" }.forEach { (_, grouped) ->
-                    val items = grouped.map { it.toCartItem() }
-                    // 레포가 확장 시그니처를 지원하면 전달, 아니면 레거시 호출
-                    try {
-                        ordersRepo.createOrder(items, branchId, branchName, note, requestedAt)
-                    } catch (_: Throwable) {
-                        ordersRepo.createOrder(items, branchId, branchName)
-                    }
-                }
-            }.onSuccess {
+                ordersRepo.createOrder(items, branchId, branchName, note, requestedAt)
+            }.onSuccess { orderId ->
                 _cart.value = emptyMap()
-                placeEvents.emit(PlaceEvent.Success)
+                placeEvents.emit(PlaceEvent.Success(orderId))
             }.onFailure { e ->
                 placeEvents.emit(PlaceEvent.Failure(e.message))
             }

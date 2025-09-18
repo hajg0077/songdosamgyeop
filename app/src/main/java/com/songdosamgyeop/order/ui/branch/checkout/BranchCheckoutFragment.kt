@@ -1,4 +1,3 @@
-// app/src/main/java/com/songdosamgyeop/order/ui/branch/checkout/BranchCheckoutFragment.kt
 package com.songdosamgyeop.order.ui.branch.checkout
 
 import android.os.Bundle
@@ -120,12 +119,36 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
             vm.placeAll(branchId, branchName, note = note, requestedAt = selectedDate)
         }
 
-        // 주문 결과 이벤트 처리
+        // 주문 결과 이벤트 처리 → 성공 시 PortOne 결제화면 진입
         viewLifecycleOwner.lifecycleScope.launch {
             vm.placeEvents.collectLatest { ev ->
                 when (ev) {
                     is BranchShopViewModel.PlaceEvent.Success -> {
-                        Snackbar.make(b.root, R.string.order_placed, Snackbar.LENGTH_LONG).show()
+                        Snackbar.make(b.root, R.string.order_placed, Snackbar.LENGTH_SHORT).show()
+
+                        // 결제 파라미터 구성
+                        val orderId = ev.orderId
+                        val amount = vm.totalAmount.value ?: 0L
+                        val dateStr = b.etDate.text?.toString()?.takeIf { it.isNotBlank() }
+                        val title = buildTitleForPayment(dateStr)
+
+                        // 구매자 정보 (실서비스에선 사용자 프로필에서 가져와 세팅)
+                        val buyerName: String? = null // TODO
+                        val buyerEmail: String? = null // TODO
+                        val buyerTel: String? = null   // TODO
+
+                        // 결제 화면으로 이동
+                        CheckoutNavigator.goPayment(
+                            context = requireContext(),
+                            orderId = orderId,
+                            title = title,
+                            amount = amount,
+                            buyerName = buyerName,
+                            buyerEmail = buyerEmail,
+                            buyerTel = buyerTel
+                        )
+
+                        // 결제화면으로 넘어가므로 현재 화면은 종료해도 무방
                         requireActivity().onBackPressedDispatcher.onBackPressed()
                     }
                     is BranchShopViewModel.PlaceEvent.Failure -> {
@@ -146,5 +169,11 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
         "HONG" -> "홍선생 직화족발"
         "COMMON" -> "공용"
         else -> brandId
+    }
+
+    /** 결제 타이틀: 지점명 + 요청일(있으면) */
+    private fun buildTitleForPayment(dateStr: String?): String {
+        val base = getString(R.string.checkout_title_base) // 예: "주문 결제"
+        return if (dateStr.isNullOrBlank()) base else "$base · $dateStr"
     }
 }

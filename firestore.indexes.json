@@ -25,7 +25,6 @@
         { "fieldPath": "placedAt", "order": "DESCENDING" }
       ]
     },
-
     {
       "collectionGroup": "orders",
       "queryScope": "COLLECTION",
@@ -42,6 +41,26 @@
         { "fieldPath": "ownerUid", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "branchName_lower", "order": "ASCENDING" },
+        { "fieldPath": "placedAt", "order": "DESCENDING" }
+      ]
+    },
+
+    /* 결제 필터/리스트용 추가 인덱스 */
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "order": "ASCENDING" },
+        { "fieldPath": "paymentStatus", "order": "ASCENDING" },
+        { "fieldPath": "placedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "orders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "branchId", "order": "ASCENDING" },
+        { "fieldPath": "paymentStatus", "order": "ASCENDING" },
         { "fieldPath": "placedAt", "order": "DESCENDING" }
       ]
     },

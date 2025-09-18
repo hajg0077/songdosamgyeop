@@ -100,4 +100,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // PortOne (iamport-android) SDK
+    implementation("com.github.iamport:iamport-android:1.3.6")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.3.6")
 }
