@@ -1,51 +1,69 @@
-package com.songdosamgyeop.order.payment
+package com.songdosamgyeop.order.ui.payment.data
 
+import com.google.firebase.Timestamp
 import com.google.firebase.functions.FirebaseFunctions
 import com.songdosamgyeop.order.data.repo.OrderPaymentUpdate
 import com.songdosamgyeop.order.data.repo.OrderRepository
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
+import javax.inject.Singleton
 
-data class VerifyParams(
-    val orderId: String,
-    val merchantUid: String,
-    val impUid: String
-)
-
+/**
+ * PortOne 결제 검증 + orders/{orderId} 결제필드 반영까지 단일 책임.
+ * Functions: verifyPortOnePayment(orderId, merchantUid, impUid)
+ */
 interface PaymentRepository {
-    suspend fun verifyAndApply(params: VerifyParams)
+    data class VerifyResult(val ok: Boolean, val message: String? = null)
+
+    suspend fun verifyAndApply(
+        orderId: String,
+        merchantUid: String,
+        impUid: String
+    ): VerifyResult
 }
 
-class PaymentRepositoryImpl(
+@Singleton
+class PaymentRepositoryImpl @Inject constructor(
     private val functions: FirebaseFunctions,
-    private val orderRepository: OrderRepository
+    private val orderRepo: OrderRepository
 ) : PaymentRepository {
 
-    override suspend fun verifyAndApply(params: VerifyParams) {
-        val fn = functions
+    override suspend fun verifyAndApply(
+        orderId: String,
+        merchantUid: String,
+        impUid: String
+    ): PaymentRepository.VerifyResult {
+        val res = functions
             .getHttpsCallable("verifyPortOnePayment")
-            .call(hashMapOf(
-                "orderId" to params.orderId,
-                "merchantUid" to params.merchantUid,
-                "impUid" to params.impUid
-            ))
+            .call(hashMapOf("orderId" to orderId, "merchantUid" to merchantUid, "impUid" to impUid))
             .await()
 
-        val data = fn.getData() as Map<*, *>
-        val ok = data["ok"] as Boolean
+        @Suppress("UNCHECKED_CAST")
+        val data = res.data as? Map<*, *> ?: emptyMap<String, Any?>()
+        val ok = (data["ok"] as? Boolean) == true
         val method = data["method"] as? String
-        val paidAt = (data["paidAt"] as? Long) ?: 0L
-        val txId = data["impUid"] as? String
+        val paidAtMs = (data["paidAt"] as? Number)?.toLong() ?: 0L
+        val txId = (data["impUid"] as? String) ?: impUid
         val message = data["message"] as? String
 
-        val upd = OrderPaymentUpdate(
-            merchantUid = params.merchantUid,
-            impUid = params.impUid,
-            paymentStatus = if (ok) "PAID" else "FAILED",
-            paidAt = if (ok && paidAt > 0) com.google.firebase.Timestamp(paidAt / 1000, ((paidAt % 1000)*1_000_000).toInt()) else null,
-            method = method,
-            txId = txId,
-            message = message
+        val ts = if (ok && paidAtMs > 0L) {
+            val sec = paidAtMs / 1000
+            val nanos = ((paidAtMs % 1000) * 1_000_000).toInt()
+            Timestamp(sec, nanos)
+        } else null
+
+        orderRepo.markPayment(
+            orderId,
+            OrderPaymentUpdate(
+                merchantUid = merchantUid,
+                impUid = impUid,
+                paymentStatus = if (ok) "PAID" else "FAILED",
+                paidAt = ts,
+                method = method,
+                txId = txId,
+                message = message
+            )
         )
-        orderRepository.markPayment(params.orderId, upd)
+        return PaymentRepository.VerifyResult(ok = ok, message = message)
     }
 }

@@ -8,13 +8,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/**
- * PaymentRepository 바인딩 전용 모듈
- */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class PaymentModule {
-    @Binds
-    @Singleton
+    @Binds @Singleton
     abstract fun bindPaymentRepository(impl: PaymentRepositoryImpl): PaymentRepository
 }
