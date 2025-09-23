@@ -1,7 +1,5 @@
 package com.songdosamgyeop.order.di
 
-import com.songdosamgyeop.order.ui.payment.data.PaymentRepository
-import com.songdosamgyeop.order.ui.payment.data.PaymentRepositoryImpl
 import com.songdosamgyeop.order.data.repo.OrderRepository
 import com.songdosamgyeop.order.data.repo.OrderRepositoryImpl
 import dagger.Binds
@@ -12,9 +10,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class PaymentModule {
-    @Binds @Singleton
-    abstract fun bindPaymentRepository(impl: PaymentRepositoryImpl): PaymentRepository
+abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindOrderRepository(impl: OrderRepositoryImpl): OrderRepository

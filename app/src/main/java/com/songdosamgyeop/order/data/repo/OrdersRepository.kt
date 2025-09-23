@@ -28,6 +28,23 @@ class OrdersRepository @Inject constructor(
     private val db: FirebaseFirestore,
     private val auth: FirebaseAuth
 ) {
+
+
+    /** orders/{orderId} 문서에 결제 관련 필드 적용 */
+    data class OrderPaymentUpdate(
+        val merchantUid: String,
+        val impUid: String,
+        val paymentStatus: String,   // 예: "PAID" / "FAILED"
+        val paidAt: Timestamp?,      // PortOne paidAt -> Timestamp
+        val method: String?,         // 카드/계좌이체 등
+        val txId: String?,           // PG 거래ID 등
+        val message: String?         // 검증/오류 메시지
+    )
+
+    interface OrderRepository {
+        suspend fun markPayment(orderId: String, update: OrderPaymentUpdate)
+    }
+
     /** 현재 사용자 uid */
     private fun uid(): String = auth.currentUser?.uid
         ?: throw IllegalStateException("로그인이 필요합니다.")
