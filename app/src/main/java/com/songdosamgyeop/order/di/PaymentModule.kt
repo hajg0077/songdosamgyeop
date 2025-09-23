@@ -1,21 +1,13 @@
 package com.songdosamgyeop.order.di
 
-import com.songdosamgyeop.order.ui.payment.data.PaymentRepository
-import com.songdosamgyeop.order.ui.payment.data.PaymentRepositoryImpl
-import com.songdosamgyeop.order.data.repo.OrderRepository
-import com.songdosamgyeop.order.data.repo.OrderRepositoryImpl
-import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
 
+/**
+ * 주의: 중복 바인딩 방지를 위해 바인딩 메서드 없음.
+ * PaymentRepository / OrderRepository 바인딩은 RepositoryModule에서만 처리.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class PaymentModule {
-    @Binds @Singleton
-    abstract fun bindPaymentRepository(impl: PaymentRepositoryImpl): PaymentRepository
-
-    @Binds @Singleton
-    abstract fun bindOrderRepository(impl: OrderRepositoryImpl): OrderRepository
-}
+abstract class PaymentModule
