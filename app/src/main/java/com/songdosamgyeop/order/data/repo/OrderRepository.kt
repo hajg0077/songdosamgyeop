@@ -17,21 +17,3 @@ data class OrderPaymentUpdate(
 interface OrderRepository {
     suspend fun markPayment(orderId: String, upd: OrderPaymentUpdate)
 }
-
-class OrderRepositoryImpl(
-    private val db: FirebaseFirestore
-) : OrderRepository {
-
-    override suspend fun markPayment(orderId: String, upd: OrderPaymentUpdate) {
-        val ref = db.collection("orders").document(orderId)
-        val map = hashMapOf<String, Any?>(
-            "merchantUid" to upd.merchantUid,
-            "paymentStatus" to upd.paymentStatus,
-            "paymentTxId" to (upd.txId ?: upd.impUid),
-            "paymentMethod" to upd.method,
-            "paidAt" to upd.paidAt,
-            "paymentMessage" to upd.message
-        )
-        ref.update(map).await()
-    }
-}

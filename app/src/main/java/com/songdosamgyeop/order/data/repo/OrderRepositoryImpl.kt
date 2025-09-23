@@ -20,7 +20,6 @@ class OrderRepositoryImpl @Inject constructor(
             "paymentMethod" to update.method,
             "paymentTxId" to update.txId,
             "paymentMessage" to update.message,
-            // 요청시각(서버 기준) 보정/기록
             "requestedAt" to FieldValue.serverTimestamp()
         ).filterValues { it != null }
 

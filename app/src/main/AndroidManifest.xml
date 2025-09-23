@@ -4,6 +4,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.songdosamgyeop.order">
 
+    <!-- 네트워크 통신 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <queries>
+
+        <!-- 간편결제 -->
+        <package android:name="com.kftc.bankpay.android" /> <!-- 뱅크페이 -->
+        <package android:name="com.nhnent.payapp" /> <!-- 페이코 -->
+        <package android:name="com.inicis.kpay" /> <!-- KPAY -->
+        <package android:name="viva.republica.toss" /> <!-- 토스페이 -->
+        <package android:name="com.samsung.android.spay" /> <!-- 삼성페이 -->
+        <package android:name="com.kakao.talk" /> <!-- 카카오페이 -->
+        <package android:name="com.nhn.android.search" /> <!-- 네이버 -->
+    </queries>
+
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -48,17 +63,5 @@
                 <data android:scheme="songdo-pay" android:host="callback"/>
             </intent-filter>
         </activity>
-
-        <queries>
-
-            <!-- 간편결제 -->
-            <package android:name="com.kftc.bankpay.android" /> <!-- 뱅크페이 -->
-            <package android:name="com.nhnent.payapp" /> <!-- 페이코 -->
-            <package android:name="com.inicis.kpay" /> <!-- KPAY -->
-            <package android:name="viva.republica.toss" /> <!-- 토스페이 -->
-            <package android:name="com.samsung.android.spay" /> <!-- 삼성페이 -->
-            <package android:name="com.kakao.talk" /> <!-- 카카오페이 -->
-            <package android:name="com.nhn.android.search" /> <!-- 네이버 -->
-        </queries>
     </application>
 </manifest>
