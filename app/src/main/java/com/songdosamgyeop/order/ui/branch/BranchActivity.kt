@@ -8,6 +8,8 @@ import androidx.navigation.ui.NavigationUI
 import com.google.android.material.color.DynamicColors
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.databinding.ActivityBranchBinding
+import com.songdosamgyeop.order.notify.TokenUploader
+import com.songdosamgyeop.order.notify.TopicSubscriber
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

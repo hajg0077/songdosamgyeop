@@ -6,6 +6,8 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.songdosamgyeop.order.R
+import com.songdosamgyeop.order.notify.TokenUploader
+import com.songdosamgyeop.order.notify.TopicSubscriber
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

@@ -1,5 +1,6 @@
 package com.songdosamgyeop.order.ui.payment
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -14,6 +15,9 @@ import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.songdosamgyeop.order.R
+import com.songdosamgyeop.order.notify.NotificationChannels
+import com.songdosamgyeop.order.notify.NotificationHelper
 
 @AndroidEntryPoint
 class PortOnePaymentActivity : AppCompatActivity() {
@@ -84,7 +88,7 @@ class PortOnePaymentActivity : AppCompatActivity() {
                     is PaymentViewModel.UiEvent.Success -> {
                         b.txtStatus.text = ev.message
                         NotificationHelper.notify(
-                            this,
+                            this as Context,
                             NotificationChannels.Orders,
                             getString(R.string.push_title_paid),
                             getString(R.string.push_body_paid)
