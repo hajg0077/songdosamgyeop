@@ -9,6 +9,29 @@ const auth = admin.auth();
 // 서울 리전
 const region = "asia-northeast3";
 
+/** ───────────────────────── 공통 유틸: 토픽 푸시 ───────────────────────── */
+async function sendToTopic(
+  topic: string,
+  title: string,
+  body: string,
+  data: Record<string, string>
+) {
+  const msg: admin.messaging.Message = {
+    topic,
+    notification: { title, body },
+    data,
+    android: {
+      priority: "high",
+      notification: {
+        channelId: "orders", // 클라에서 사용하는 채널 ID와 일치
+        tag: data["orderId"],
+      },
+    },
+    apns: { headers: { "apns-priority": "10" } },
+  };
+  await admin.messaging().send(msg);
+}
+
 /** HQ 권한 확인 */
 function assertHQ(context: functions.https.CallableContext) {
   const role = context.auth?.token?.role;
@@ -151,20 +174,23 @@ export const hqUpdateOrderStatus = functions
     const canTransit = (from: string, to: string) => {
       const F = (from || "PLACED").toUpperCase();
       const T = to.toUpperCase();
-      if (F === "PLACED")  return T === "APPROVED" || T === "REJECTED";
+      if (F === "PLACED") return T === "APPROVED" || T === "REJECTED";
       if (F === "APPROVED") return T === "SHIPPED";
-      if (F === "SHIPPED")  return T === "DELIVERED";
+      if (F === "SHIPPED") return T === "DELIVERED";
       return false;
     };
 
     const ref = db.collection("orders").doc(orderId);
-    return await db.runTransaction(async tx => {
+    // 트랜잭션 내에서 지사 토픽 정보/표시 텍스트에 필요한 필드를 회수해서 반환
+    const result = await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if (!snap.exists) {
         throw new functions.https.HttpsError("not-found", "order not found");
       }
       const order = snap.data()!;
       const prev = (order.status || "PLACED").toString().toUpperCase();
+      const branchId = String(order.branchId || "");
+      const branchName = String(order.branchName || "-");
 
       if (!canTransit(prev, next)) {
         throw new functions.https.HttpsError(
@@ -182,12 +208,27 @@ export const hqUpdateOrderStatus = functions
           at: now,
           by: context.auth!.uid,
           from: prev,
-          to: next
-        })
+          to: next,
+        }),
       });
 
-      return { ok: true, message: "status updated", from: prev, to: next };
+      return { from: prev, to: next, branchId, branchName };
     });
+
+    // 트랜잭션 성공 후: 해당 지사 토픽으로 알림 전송
+    if (result.branchId) {
+      const topic = `branch_${result.branchId}`;
+      const title = "주문 상태 변경";
+      const body = `지사 ${result.branchName} 주문 ${orderId} 상태가 ${result.to} 로 변경되었습니다.`;
+      await sendToTopic(topic, title, body, {
+        type: "ORDER_STATUS",
+        orderId,
+        branchId: result.branchId,
+        status: result.to,
+      });
+    }
+
+    return { ok: true, message: "status updated", ...result };
   });
 
 /** ───────────────────────── PortOne 결제 검증(onCall) + Webhook(옵션) ─────────────────────────
@@ -201,7 +242,7 @@ const PORTONE_API_SECRET =
 async function getPortOneToken(): Promise<string> {
   const res = await axios.post("https://api.iamport.kr/users/getToken", {
     imp_key: PORTONE_API_KEY,
-    imp_secret: PORTONE_API_SECRET
+    imp_secret: PORTONE_API_SECRET,
   });
   const token = res.data?.response?.access_token;
   if (!token) throw new Error("PortOne token error");
@@ -210,12 +251,12 @@ async function getPortOneToken(): Promise<string> {
 
 async function getPayment(impUid: string, token: string) {
   const res = await axios.get(`https://api.iamport.kr/payments/${impUid}`, {
-    headers: { Authorization: token }
+    headers: { Authorization: token },
   });
   return res.data.response;
 }
 
-/** onCall: 클라에서 impUid/merchantUid 전달 → PortOne 검증 후 orders/{orderId} 반영 */
+/** onCall: 클라에서 impUid/merchantUid 전달 → PortOne 검증 후 orders/{orderId} 반영 + HQ 알림 */
 export const verifyPortOnePayment = functions
   .region(region)
   .https.onCall(async (data, context) => {
@@ -232,6 +273,16 @@ export const verifyPortOnePayment = functions
       throw new functions.https.HttpsError("invalid-argument", "params missing");
     }
 
+    // 주문 정보 선조회(브랜치/금액/지사명 확보 → 알림 본문에 사용)
+    const orderSnap = await db.collection("orders").doc(orderId).get();
+    if (!orderSnap.exists) {
+      throw new functions.https.HttpsError("not-found", "order not found");
+    }
+    const order = orderSnap.data()!;
+    const branchId = String(order.branchId || "");
+    const branchName = String(order.branchName || "-");
+    const totalAmount = Number(order.totalAmount || 0);
+
     const token = await getPortOneToken();
     const payment = await getPayment(impUid, token);
 
@@ -246,15 +297,32 @@ export const verifyPortOnePayment = functions
       paymentTxId: impUid,
       paymentMethod: method,
       paidAt: ok ? admin.firestore.Timestamp.fromMillis(paidAtMs) : null,
-      paymentMessage: ok ? "결제 완료(PortOne)" : `검증 실패: ${payment?.status ?? "unknown"}`
+      paymentMessage: ok ? "결제 완료(PortOne)" : `검증 실패: ${payment?.status ?? "unknown"}`,
     });
 
+    // 결제 성공 → HQ 토픽으로 알림
+    if (ok) {
+      const title = "지사 결제 완료";
+      const body = `${branchName} · 주문 ${orderId} · ${totalAmount.toLocaleString("ko-KR")}원`;
+      await sendToTopic("hq", title, body, {
+        type: "ORDER_PAID",
+        orderId,
+        branchId,
+        status: String(order.status || "PLACED"),
+        paymentStatus: "PAID",
+      });
+    }
+
     return {
-      ok, method, paidAt: paidAtMs, impUid, message: ok ? "OK" : "NOT_PAID"
+      ok,
+      method,
+      paidAt: paidAtMs,
+      impUid,
+      message: ok ? "OK" : "NOT_PAID",
     };
   });
 
-/** Webhook(옵션): PortOne 대시보드에 등록 시 상태 동기화 자동화 */
+/** Webhook(옵션): PortOne 대시보드에 등록 시 상태 동기화 자동화 + HQ 알림 */
 export const portoneWebhook = functions
   .region(region)
   .https.onRequest(async (req, res) => {
@@ -271,16 +339,37 @@ export const portoneWebhook = functions
       const orderId = (merchant_uid as string).split("_").pop();
 
       if (orderId) {
-        await db.collection("orders").doc(orderId).update({
+        const ref = db.collection("orders").doc(orderId);
+        const snap = await ref.get();
+        const order = snap.data() || {};
+        const branchName = String(order.branchName || "-");
+        const totalAmount = Number(order.totalAmount || 0);
+        const branchId = String(order.branchId || "");
+
+        await ref.update({
           merchantUid: merchant_uid,
           paymentStatus: ok ? "PAID" : (status?.toUpperCase() || "FAILED"),
           paymentTxId: imp_uid,
           paymentMethod: payment?.pay_method || null,
-          paidAt: ok && payment?.paid_at
-            ? admin.firestore.Timestamp.fromMillis(payment.paid_at * 1000)
-            : null,
-          paymentMessage: ok ? "Webhook 결제 완료" : `Webhook 상태: ${status || "unknown"}`
+          paidAt:
+            ok && payment?.paid_at
+              ? admin.firestore.Timestamp.fromMillis(payment.paid_at * 1000)
+              : null,
+          paymentMessage: ok ? "Webhook 결제 완료" : `Webhook 상태: ${status || "unknown"}`,
         });
+
+        // 결제 성공 → HQ 토픽 알림
+        if (ok) {
+          const title = "지사 결제 완료";
+          const body = `${branchName} · 주문 ${orderId} · ${totalAmount.toLocaleString("ko-KR")}원`;
+          await sendToTopic("hq", title, body, {
+            type: "ORDER_PAID",
+            orderId,
+            branchId,
+            status: String(order.status || "PLACED"),
+            paymentStatus: "PAID",
+          });
+        }
       }
       res.status(200).send({ ok: true });
     } catch (e: any) {

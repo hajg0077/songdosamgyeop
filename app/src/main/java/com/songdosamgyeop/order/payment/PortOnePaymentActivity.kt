@@ -83,6 +83,12 @@ class PortOnePaymentActivity : AppCompatActivity() {
                     }
                     is PaymentViewModel.UiEvent.Success -> {
                         b.txtStatus.text = ev.message
+                        NotificationHelper.notify(
+                            this,
+                            NotificationChannels.Orders,
+                            getString(R.string.push_title_paid),
+                            getString(R.string.push_body_paid)
+                        )
                         setResult(RESULT_OK)
                         finish()
                     }

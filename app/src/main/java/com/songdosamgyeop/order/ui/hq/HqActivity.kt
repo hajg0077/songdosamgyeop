@@ -21,5 +21,8 @@ class HqActivity : AppCompatActivity(R.layout.activity_hq) {
 
         // (선택) 탭 재선택 시 현재 리스트 상단으로 스크롤 같은 UX를 원하면 여기에 구현
         bottom.setOnItemReselectedListener { /* no-op for now */ }
+
+        TokenUploader.refreshAndUpload()
+        TopicSubscriber.subscribeHq()
     }
 }

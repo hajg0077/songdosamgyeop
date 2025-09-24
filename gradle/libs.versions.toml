@@ -11,6 +11,12 @@ constraintlayout = "2.1.4"
 navigationFragmentKtx = "2.9.3"
 navigationUiKtx = "2.9.3"
 
+# 추가: Lifecycle/Browser/Splash/Desugar
+lifecycle = "2.8.6"
+browser = "1.8.0"
+splashscreen = "1.0.1"
+desugar = "2.0.4"
+
 # Test (네가 준 버전 유지)
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -28,6 +34,9 @@ firebase-crashlytics-gradle = "3.0.2"
 firebase-perf-plugin = "1.4.2"
 swiperefreshlayout = "1.1.0"
 
+# Iamport(PortOne) - JitPack 태그는 v 접두사 필요
+iamport = "v1.3.6"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
@@ -36,6 +45,12 @@ androidx-activity = { group = "androidx.activity", name = "activity", version.re
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
 androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "navigationUiKtx" }
+
+# ✅ 추가: Lifecycle / Browser / Splash
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-ktx   = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx",  version.ref = "lifecycle" }
+androidx-browser                 = { group = "androidx.browser",   name = "browser",                version.ref = "browser" }
+androidx-core-splashscreen       = { group = "androidx.core",      name = "core-splashscreen",      version.ref = "splashscreen" }
 
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -56,6 +71,8 @@ firebase-functions = { group = "com.google.firebase", name = "firebase-functions
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
 firebase-perf = { group = "com.google.firebase", name = "firebase-perf-ktx" }
+# ✅ 추가: FCM
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging-ktx" }
 
 # Test
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -63,11 +80,15 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "j
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
 
+# ✅ 추가: Desugar
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
+
+# ✅ 추가: PortOne SDK (Iamport via JitPack)
+iamport-android = { group = "com.github.iamport", name = "iamport-android", version.ref = "iamport" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-
-# 추가 플러그인 (alias로 사용)
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics-gradle" }
 firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "firebase-perf-plugin" }

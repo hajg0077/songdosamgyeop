@@ -65,6 +65,7 @@ android {
     }
 }
 
+
 dependencies {
     // AndroidX / UI
     implementation(libs.androidx.core.ktx)
@@ -73,10 +74,15 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation(libs.androidx.browser) // ✅ PortOne 커스텀 탭 의존성
 
     // Navigation
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.viewmodel.ktx) // ✅ viewModels(), SavedState
+    implementation(libs.androidx.lifecycle.runtime.ktx)   // ✅ lifecycleScope 등
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
@@ -98,15 +104,16 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.perf)
-
-    // Test
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+    implementation(libs.firebase.messaging) // ✅ FCM Push
 
     // ✅ PortOne (iamport-android) SDK — JitPack 태그는 v 접두사 필요
     implementation("com.github.iamport:iamport-android:v1.3.6")
 
     // ✅ desugar 라이브러리 (compileOptions와 세트)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    // Test
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }

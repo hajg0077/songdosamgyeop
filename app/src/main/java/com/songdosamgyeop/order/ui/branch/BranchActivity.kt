@@ -36,5 +36,11 @@ class BranchActivity : AppCompatActivity() {
             }
             destId?.let { nav.popBackStack(it, false) }
         }
+
+        // TODO: 실제 로그인 사용자 정보/지점정보에서 branchId를 가져오세요.
+        val branchId = /* user.branchId */ "BR001"
+
+        TokenUploader.refreshAndUpload()
+        TopicSubscriber.subscribeBranch(branchId)
     }
 }

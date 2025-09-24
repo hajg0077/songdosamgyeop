@@ -88,6 +88,11 @@
     <string name="order_placed">주문이 접수되었습니다</string>
     <string name="order_failed_fmt">주문 실패: %1$s</string>
 
+    <string name="channel_orders_name">주문 알림</string>
+    <string name="channel_orders_desc">결제 및 주문상태 관련 알림</string>
+
+    <string name="push_title_paid">결제 완료</string>
+    <string name="push_body_paid">결제가 정상 처리되었습니다.</string>
     <!-- 검색/안내 문구 -->
     <string name="branch_search_hint_period_disabled">지사명 검색에서는 기간 필터가 적용되지 않습니다.</string>
 </resources>
