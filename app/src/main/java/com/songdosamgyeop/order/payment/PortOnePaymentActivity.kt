@@ -1,6 +1,5 @@
 package com.songdosamgyeop.order.ui.payment
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -15,9 +14,6 @@ import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import com.songdosamgyeop.order.R
-import com.songdosamgyeop.order.notify.NotificationChannels
-import com.songdosamgyeop.order.notify.NotificationHelper
 
 @AndroidEntryPoint
 class PortOnePaymentActivity : AppCompatActivity() {
@@ -31,36 +27,39 @@ class PortOnePaymentActivity : AppCompatActivity() {
         b = ActivityPortonePaymentBinding.inflate(layoutInflater)
         setContentView(b.root)
 
-        // SDK 초기화
         Iamport.init(this)
 
-        // 전달 파라미터
         val orderId = intent.getStringExtra("orderId") ?: run { finish(); return }
         val title = intent.getStringExtra("title") ?: "주문 결제"
         val amount = intent.getLongExtra("amount", 0L)
         val buyerName = intent.getStringExtra("buyerName")
         val buyerEmail = intent.getStringExtra("buyerEmail")
         val buyerTel = intent.getStringExtra("buyerTel")
+        val payMethod = intent.getStringExtra("payMethod") ?: "card" // card | trans | vbank
 
-        // UI
         b.txtTitle.text = title
         b.txtAmount.text = "${nf.format(amount)}원"
 
-        val userCode = Env.PORTONE_USER_CODE   // 예: "imp12345678"
+        val userCode = Env.PORTONE_USER_CODE
         val merchantUid = "muid_${System.currentTimeMillis()}_${orderId}"
 
         b.btnPay.setOnClickListener {
-            // 현재 버전은 문자열 파라미터를 기대
             val req = IamPortRequest(
                 pg = "html5_inicis",
-                pay_method = "card",
+                pay_method = payMethod,      // ← 카드/계좌이체/가상계좌 선택 반영
                 name = title,
                 merchant_uid = merchantUid,
                 amount = amount.toString(),
                 app_scheme = Env.APP_SCHEME,
                 buyer_name = buyerName,
                 buyer_email = buyerEmail,
-                buyer_tel = buyerTel
+                buyer_tel = buyerTel,
+                // 가상계좌를 쓰는 경우(옵션) 만료일 등 파라미터 전달
+                vbank_due = if (payMethod == "vbank") {
+                    // 오늘 + 3일 23:59 (UTC 기준 시/분 문자열; 필요시 계산 로직 보강)
+                    // "202512312359" 같은 형태(YYYYMMDDHHmm). 운영에 맞게 계산하세요.
+                    null
+                } else null
             )
 
             Iamport.payment(userCode, iamPortRequest = req) { resp: IamPortResponse? ->
@@ -87,12 +86,6 @@ class PortOnePaymentActivity : AppCompatActivity() {
                     }
                     is PaymentViewModel.UiEvent.Success -> {
                         b.txtStatus.text = ev.message
-                        NotificationHelper.notify(
-                            this as Context,
-                            NotificationChannels.Orders,
-                            getString(R.string.push_title_paid),
-                            getString(R.string.push_body_paid)
-                        )
                         setResult(RESULT_OK)
                         finish()
                     }

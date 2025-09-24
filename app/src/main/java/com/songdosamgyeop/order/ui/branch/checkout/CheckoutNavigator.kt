@@ -12,7 +12,8 @@ object CheckoutNavigator {
         amount: Long,
         buyerName: String?,
         buyerEmail: String?,
-        buyerTel: String?
+        buyerTel: String?,
+        payMethod: String = "card" // "card" | "trans" | "vbank"
     ) {
         context.startActivity(
             Intent(context, PortOnePaymentActivity::class.java).apply {
@@ -22,6 +23,7 @@ object CheckoutNavigator {
                 putExtra("buyerName", buyerName)
                 putExtra("buyerEmail", buyerEmail)
                 putExtra("buyerTel", buyerTel)
+                putExtra("payMethod", payMethod)
             }
         )
     }
