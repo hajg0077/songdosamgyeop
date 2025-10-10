@@ -52,17 +52,22 @@
             android:theme="@style/Theme.Material3.DayNight.NoActionBar" />
 
         <!-- 결제 화면 -->
+        <!-- ✅ KG이니시스 테스트 결제 화면 -->
         <activity
-            android:name=".ui.payment.PortOnePaymentActivity"
+            android:name=".ui.payment.InicisPaymentActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Songdo">
-            <!-- PortOne 앱/브라우저 복귀를 위한 스킴 -->
+
+            <!-- KG이니시스 결제 후 앱 복귀용 딥링크: songdosamgyeop://inicis/return -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="songdo-pay" android:host="callback"/>
+                <data
+                    android:scheme="songdosamgyeop"
+                    android:host="inicis"
+                    android:path="/return" />
             </intent-filter>
         </activity>
         <!-- 기본 아이콘/색 지정 (푸시 알림 기본값) -->

@@ -1,8 +1,8 @@
-package com.songdosamgyeop.order.ui.payment
+package com.songdosamgyeop.order.payment
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.songdosamgyeop.order.ui.payment.data.PaymentRepository
+import com.songdosamgyeop.order.payment.data.PaymentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.BufferOverflow
@@ -30,11 +30,11 @@ class PaymentViewModel @Inject constructor(
     )
     val events = _events.asSharedFlow()
 
-    fun verifyAndApply(orderId: String, merchantUid: String, impUid: String) {
+    fun verifyAndApply(orderId: String, merchantUid: String, txId: String) {
         viewModelScope.launch {
             _events.emit(UiEvent.Verifying)
             runCatching {
-                paymentRepo.verifyAndApply(orderId, merchantUid, impUid)
+                paymentRepo.verifyAndApply(orderId, merchantUid, txId)
             }.onSuccess { r ->
                 if (r.ok) _events.emit(UiEvent.Success())
                 else _events.emit(UiEvent.Failure(r.message ?: "결제 검증 실패"))

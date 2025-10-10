@@ -106,9 +106,6 @@ dependencies {
     implementation(libs.firebase.perf)
     implementation(libs.firebase.messaging) // ✅ FCM Push
 
-    // ✅ PortOne (iamport-android) SDK — JitPack 태그는 v 접두사 필요
-    implementation("com.github.iamport:iamport-android:v1.3.6")
-
     // ✅ desugar 라이브러리 (compileOptions와 세트)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 
@@ -116,4 +113,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

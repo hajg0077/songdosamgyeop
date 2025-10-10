@@ -12,9 +12,14 @@ object Env {
     // Cloud Functions
     const val FUNCTIONS_REGION: String = "asia-northeast3"
 
-    // PortOne 테스트 상점/채널 (실운영시 Secret은 Functions에서만 사용)
-    const val PORTONE_STORE_ID: String = "store-test-abc123"
-    const val PORTONE_CHANNEL_KEY: String = "channel-test-xyz789"
+    // ✅ KG이니시스 테스트 자격
+    const val INICIS_MID = "INIpayTestMid"       // ← 테스트 MID로 교체
+    const val INICIS_SIGN_KEY = "TEST_SIGN_KEY"  // ← 테스트 signKey로 교체
+
+    // TODO 확인 해야됌
+    // 서버 검증(Cloud Functions onRequest HTTP 엔드포인트; callable가 아니라 URL 호출형일 수도)
+    // 여기서는 기존 구조를 재사용하기 위해 HTTPS Callable 함수명 사용
+    const val FUNCTIONS_VERIFY_INICIS = "verifyInicisPayment"
 
     // 결제 UI 시뮬레이터 옵션 (FUNCTIONS_ENABLED=false일 때만 사용)
     const val PAYMENT_SIMULATE_SUCCESS: Boolean = true

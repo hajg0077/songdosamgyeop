@@ -2,8 +2,8 @@ package com.songdosamgyeop.order.di
 
 import com.songdosamgyeop.order.data.repo.OrderRepository
 import com.songdosamgyeop.order.data.repo.OrderRepositoryImpl
-import com.songdosamgyeop.order.ui.payment.data.PaymentRepository
-import com.songdosamgyeop.order.ui.payment.data.PaymentRepositoryImpl
+import com.songdosamgyeop.order.payment.data.PaymentRepository
+import com.songdosamgyeop.order.payment.data.PaymentRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
