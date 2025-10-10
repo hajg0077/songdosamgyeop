@@ -135,7 +135,7 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
                         // 구매자 정보 (실서비스에선 사용자 프로필에서 가져와 세팅)
                         val buyerName: String? = null // TODO
                         val buyerEmail: String? = null // TODO
-                        val buyerTel: String? = null   // TODO
+                        val buyerTel: String = ""   // TODO
 
                         // 결제 화면으로 이동
                         CheckoutNavigator.goPayment(
