@@ -1,7 +1,7 @@
 package com.songdosamgyeop.order.user
 
 import android.content.Context
-import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.emptyPreferences
@@ -21,7 +21,7 @@ class UserLocalDataStore @Inject constructor(
         val UID = stringPreferencesKey("uid")
         val EMAIL = stringPreferencesKey("email")
         val NAME = stringPreferencesKey("name")
-        val ROLE = stringPreferencesKey("role")            // "HQ" | "BRANCH"
+        val ROLE = stringPreferencesKey("role")
         val BRANCH_ID = stringPreferencesKey("branchId")
         val BRANCH_NAME = stringPreferencesKey("branchName")
     }
@@ -42,17 +42,20 @@ class UserLocalDataStore @Inject constructor(
             }
 
     suspend fun saveProfile(profile: UserProfile) {
-        appContext.userPrefsDataStore.edit { p: Preferences ->
+        appContext.userPrefsDataStore.edit { p: MutablePreferences -> // ✅ MutablePreferences
             p[Keys.UID] = profile.uid
             p[Keys.EMAIL] = profile.email
             p[Keys.NAME] = profile.name
             p[Keys.ROLE] = profile.role
-            profile.branchId?.let { p[Keys.BRANCH_ID] = it } ?: p.remove(Keys.BRANCH_ID)
-            profile.branchName?.let { p[Keys.BRANCH_NAME] = it } ?: p.remove(Keys.BRANCH_NAME)
+
+            if (profile.branchId != null) p[Keys.BRANCH_ID] = profile.branchId else p.remove(Keys.BRANCH_ID) // ✅ remove OK
+            if (profile.branchName != null) p[Keys.BRANCH_NAME] = profile.branchName else p.remove(Keys.BRANCH_NAME)
         }
     }
 
     suspend fun clear() {
-        appContext.userPrefsDataStore.edit { it.clear() }
+        appContext.userPrefsDataStore.edit { p: MutablePreferences -> // ✅ MutablePreferences
+            p.clear()
+        }
     }
 }
