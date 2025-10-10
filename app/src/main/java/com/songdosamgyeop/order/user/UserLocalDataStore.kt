@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.emptyPreferences
 import com.songdosamgyeop.order.common.datastore.userPrefsDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -15,7 +16,7 @@ import javax.inject.Singleton
 
 @Singleton
 class UserLocalDataStore @Inject constructor(
-    private val appContext: Context
+    @ApplicationContext private val appContext: Context
 ) {
     private object Keys {
         val UID = stringPreferencesKey("uid")
