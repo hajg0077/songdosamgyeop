@@ -9,18 +9,6 @@
     <!-- Android 13+ 알림 권한 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <queries>
-
-        <!-- 간편결제 -->
-        <package android:name="com.kftc.bankpay.android" /> <!-- 뱅크페이 -->
-        <package android:name="com.nhnent.payapp" /> <!-- 페이코 -->
-        <package android:name="com.inicis.kpay" /> <!-- KPAY -->
-        <package android:name="viva.republica.toss" /> <!-- 토스페이 -->
-        <package android:name="com.samsung.android.spay" /> <!-- 삼성페이 -->
-        <package android:name="com.kakao.talk" /> <!-- 카카오페이 -->
-        <package android:name="com.nhn.android.search" /> <!-- 네이버 -->
-    </queries>
-
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -54,7 +42,7 @@
         <!-- 결제 화면 -->
         <!-- ✅ KG이니시스 테스트 결제 화면 -->
         <activity
-            android:name=".ui.payment.InicisPaymentActivity"
+            android:name=".payment.InicisPaymentActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Songdo">
@@ -70,6 +58,7 @@
                     android:path="/return" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.login.PendingApprovalActivity" />
         <!-- 기본 아이콘/색 지정 (푸시 알림 기본값) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"

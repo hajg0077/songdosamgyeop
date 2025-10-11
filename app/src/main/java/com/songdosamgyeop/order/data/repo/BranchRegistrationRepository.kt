@@ -19,28 +19,21 @@ class BranchRegistrationRepository @Inject constructor(
      *
      * @param userUid  인증된 사용자 UID (필수)  ← 규칙: 문서ID와 auth.uid가 매칭되어야 함
      * @param email    이메일(필수)
-     * @param name     신청자 이름(필수)
      * @param branchName 지사명(필수)
-     * @param branchCode 지사 코드(선택)
-     * @param phone    연락처(선택)
-     * @param memo     메모(선택)
+     * @param phone    연락처(필수)
      * @param installationId 설치ID(필수: 기기 1회 제한)
      * @param address  주소(roadAddr/zipNo/detail)  ← 필수
      */
     suspend fun submitRegistration(
         userUid: String,
         email: String,
-        name: String,
         branchName: String,
-        branchCode: String?,
         phone: String?,
-        memo: String?,
         installationId: String,
         address: RegistrationAddress
     ): Result<Unit> = runCatching {
         require(userUid.isNotBlank()) { "userUid가 필요합니다." }
         require(email.isNotBlank()) { "이메일을 입력하세요." }
-        require(name.isNotBlank()) { "신청자 이름을 입력하세요." }
         require(branchName.isNotBlank()) { "지사명을 입력하세요." }
         require(address.roadAddr.isNotBlank()) { "도로명주소를 입력하세요." }
         require(address.zipNo.length == 5) { "우편번호 5자리를 입력하세요." }
@@ -50,12 +43,9 @@ class BranchRegistrationRepository @Inject constructor(
         val data = mapOf(
             "userUid" to userUid,
             "email" to email.trim(),
-            "name" to name.trim(),
             "branchName" to branchName.trim(),
             "branchName_lower" to branchName.trim().lowercase(),
-            "branchCode" to branchCode?.trim(),
             "branchTel" to phone?.trim(),
-            "memo" to memo?.trim(),
             "installationId" to installationId,
             "status" to "PENDING",
             "address" to mapOf(

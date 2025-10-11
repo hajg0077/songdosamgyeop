@@ -44,8 +44,6 @@ class LoginViewModel @Inject constructor(
         installationId: String,
         branchName: String, // ⬅️ 지사명 필수
         address: RegistrationAddress, // ⬅️ 주소 3필드
-        branchCode: String? = null,
-        memo: String? = null
     ) {
         // (1)
         checkDeviceLock(installationId)
@@ -58,11 +56,8 @@ class LoginViewModel @Inject constructor(
         regRepo.submitRegistration(
             userUid = user.uid,
             email = email,
-            name = user.displayName ?: "", // 없으면 빈문자
             branchName = branchName,
-            branchCode = branchCode,
             phone = phone,
-            memo = memo,
             installationId = installationId,
             address = address
         ).getOrThrow()

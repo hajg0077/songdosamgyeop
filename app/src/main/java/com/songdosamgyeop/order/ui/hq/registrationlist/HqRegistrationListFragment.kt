@@ -1,5 +1,7 @@
 package com.songdosamgyeop.order.ui.hq.registrationlist
 
+import android.R.attr.colorError
+import android.R.attr.colorPrimary
 import com.songdosamgyeop.order.R
 import android.graphics.Canvas
 import android.os.Bundle
@@ -19,13 +21,12 @@ import com.google.android.material.textfield.TextInputEditText
 import com.songdosamgyeop.order.core.model.RegistrationStatus
 import com.songdosamgyeop.order.databinding.FragmentHqRegistrationListBinding
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.core.graphics.drawable.toDrawable
 import com.songdosamgyeop.order.ui.common.SpacingItemDecoration
 import com.songdosamgyeop.order.ui.common.showError
 import com.songdosamgyeop.order.ui.common.showInfo
 import android.content.DialogInterface
-// ❌ 지우기: import com.songdosamgyeop.order.data.model.Registration
 import com.songdosamgyeop.order.data.repo.Registration as RepoRegistration  // ✅ alias 로 통일
+import android.graphics.drawable.ColorDrawable
 
 @AndroidEntryPoint
 class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_list) {
@@ -107,7 +108,8 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                 val iconMargin = height / 4
 
                 if (dX > 0) {
-                    val bg = MaterialColors.getColor(item, com.google.android.material.R.attr.colorPrimary).toDrawable()
+                    val colorPrimary = MaterialColors.getColor(item, colorPrimary)
+                    val bg = ColorDrawable(colorPrimary)
                     bg.setBounds(item.left, item.top, item.left + dX.toInt(), item.bottom)
                     bg.draw(c)
                     val icon = ContextCompat.getDrawable(ctx, R.drawable.ic_check_24)
@@ -120,9 +122,10 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                         it.draw(c)
                     }
                 } else if (dX < 0) {
-                    val bg = MaterialColors.getColor(item, com.google.android.material.R.attr.colorError).toDrawable()
-                    bg.setBounds(item.right + dX.toInt(), item.top, item.right, item.bottom)
-                    bg.draw(c)
+                    val colorError = MaterialColors.getColor(item, colorError)
+                    val bgErr = ColorDrawable(colorError)
+                    bgErr.setBounds(item.right + dX.toInt(), item.top, item.right, item.bottom)
+                    bgErr.draw(c)
                     val icon = ContextCompat.getDrawable(ctx, R.drawable.ic_close_24)
                     icon?.let {
                         val top = item.top + iconMargin
