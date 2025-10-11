@@ -16,6 +16,7 @@ import com.songdosamgyeop.order.ui.hq.HqActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.songdosamgyeop.order.core.model.RegistrationAddress
 
 @AndroidEntryPoint
 class LoginFragment : Fragment(R.layout.fragment_login) {
@@ -45,26 +46,30 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         }
 
         btnSignup.setOnClickListener {
-            PhoneInputBottomSheet { phone ->
-                val email = etEmail.text?.toString().orEmpty()
-                val pw = etPw.text?.toString().orEmpty()
+            val email = etEmail.text?.toString().orEmpty()
+            val pw = etPw.text?.toString().orEmpty()
 
-                lifecycleScope.launch {
-                    // 설치 ID 가져오기
-                    val installationId = com.google.firebase.installations.FirebaseInstallations.getInstance()
-                        .id.await()
+            SignupWizardBottomSheet { phone, branchName, address ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val installationId = com.google.firebase.installations.FirebaseInstallations
+                        .getInstance().id.await()
 
-                    runCatching { vm.signUpBranch(email, pw, phone, installationId) }
-                        .onSuccess {
-                            // ✅ 로컬 알림(간단 토스트) — HQ 푸시는 Functions가 전송
-                            Toast.makeText(requireContext(), "신청 완료! 본사 승인 대기", Toast.LENGTH_LONG).show()
-                            // 필요 시 여기서 바로 Splash로 이동해 재판단해도 OK
-                        }
-                        .onFailure { e ->
-                            Toast.makeText(requireContext(), e.message ?: "회원가입 실패", Toast.LENGTH_LONG).show()
-                        }
+                    runCatching {
+                        vm.signUpBranch(
+                            email = email,
+                            password = pw,
+                            phone = phone,
+                            installationId = installationId,
+                            branchName = branchName,
+                            address = address
+                        )
+                    }.onSuccess {
+                        Toast.makeText(requireContext(), "신청 완료! 본사 승인 대기", Toast.LENGTH_LONG).show()
+                    }.onFailure { e ->
+                        Toast.makeText(requireContext(), e.message ?: "회원가입 실패", Toast.LENGTH_LONG).show()
+                    }
                 }
-            }.show(parentFragmentManager, "phone_input")
+            }.show(parentFragmentManager, "signup_wizard")
         }
     }
 

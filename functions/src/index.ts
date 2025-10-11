@@ -1,38 +1,23 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import axios from "axios";
+import * as express from "express";
+import { sendToTopic } from "./fcm";
+import { InicisClient, parseNoti } from "./pg/inicis";
 
 admin.initializeApp();
 const db = admin.firestore();
 const auth = admin.auth();
 
-// 서울 리전
+// ──────────────────────────────────────────────────────────────
+// Config
+// ──────────────────────────────────────────────────────────────
 const region = "asia-northeast3";
+const HQ_TOPIC = process.env.HQ_TOPIC || "hq";
+const BRANCH_TOPIC = (branchId: string) => `branch-${branchId}`;
 
-/** ───────────────────────── 공통 유틸: 토픽 푸시 ───────────────────────── */
-async function sendToTopic(
-  topic: string,
-  title: string,
-  body: string,
-  data: Record<string, string>
-) {
-  const msg: admin.messaging.Message = {
-    topic,
-    notification: { title, body },
-    data,
-    android: {
-      priority: "high",
-      notification: {
-        channelId: "orders", // 클라에서 사용하는 채널 ID와 일치
-        tag: data["orderId"],
-      },
-    },
-    apns: { headers: { "apns-priority": "10" } },
-  };
-  await admin.messaging().send(msg);
-}
-
-/** HQ 권한 확인 */
+// ──────────────────────────────────────────────────────────────
+/** HQ 권한 체크 */
+// ──────────────────────────────────────────────────────────────
 function assertHQ(context: functions.https.CallableContext) {
   const role = context.auth?.token?.role;
   if (!context.auth || role !== "HQ") {
@@ -40,386 +25,383 @@ function assertHQ(context: functions.https.CallableContext) {
   }
 }
 
-/** 공통: 등록문서 로드 + 상태체크 */
+// ──────────────────────────────────────────────────────────────
+/** registrations/{doc} 로드 헬퍼 */
+// ──────────────────────────────────────────────────────────────
 async function loadRegistration(docId: string) {
   const ref = db.collection("registrations").doc(docId);
   const snap = await ref.get();
-  if (!snap.exists) {
-    throw new functions.https.HttpsError("not-found", "registration not found");
-  }
-  const data = snap.data()!;
-  return { ref, data };
+  if (!snap.exists) throw new functions.https.HttpsError("not-found", "registration not found");
+  return { ref, data: snap.data()! };
 }
 
-/** ───────────────────────── HQ: 신청 승인/반려/리셋 ───────────────────────── */
+// ──────────────────────────────────────────────────────────────
+// ① HQ: 가입 승인/반려/리셋
+// ──────────────────────────────────────────────────────────────
 
-export const hqApproveRegistration = functions
-  .region(region)
-  .https.onCall(async (data, context) => {
-    assertHQ(context);
-    const docId = String(data.docId || "");
-    if (!docId) throw new functions.https.HttpsError("invalid-argument", "docId required");
+/**
+ * 가입 승인:
+ * - 사용자 생성/업데이트
+ * - 커스텀 클레임(role=BRANCH, branchId) 부여
+ * - branches/{branchId} 생성(주소는 roadAddr/zipNo/detail 3필드만)
+ * - users/{uid} 캐시 업데이트
+ * - registrations 상태를 APPROVED로 변경
+ * - HQ 토픽 알림
+ */
+export const hqApproveRegistration = functions.region(region).https.onCall(async (data, context) => {
+  assertHQ(context);
 
-    const { ref, data: reg } = await loadRegistration(docId);
-    if (reg.status !== "PENDING") {
-      throw new functions.https.HttpsError("failed-precondition", "already processed");
+  const docId = String(data.docId || "");
+  if (!docId) throw new functions.https.HttpsError("invalid-argument", "docId required");
+
+  const { ref, data: reg } = await loadRegistration(docId);
+  if (reg.status !== "PENDING") {
+    throw new functions.https.HttpsError("failed-precondition", "already processed");
+  }
+
+  const email = String(reg.email || "");
+  const name = String(reg.name || "");
+
+  // HQ에서 최종 지사명/전화/주소를 넘길 수 있고, 없으면 신청 데이터 사용
+  const branchName = String((data.branchName ?? reg.branchName ?? "") || "");
+  const branchTel = String((data.branchTel ?? reg.branchTel ?? "") || "");
+
+  // ✅ 주소는 3필드만 사용
+  const address = {
+    roadAddr: String(data.address?.roadAddr ?? reg.address?.roadAddr ?? ""),
+    zipNo: String(data.address?.zipNo ?? reg.address?.zipNo ?? ""),
+    detail: String(data.address?.detail ?? reg.address?.detail ?? "")
+  };
+
+  // branchId 결정
+  const branchId = branchCode || `BR_${ref.id}`;
+
+  // 사용자 생성/갱신
+  let user;
+  try {
+    user = await auth.getUserByEmail(email);
+    if (name && user.displayName !== name) {
+      await auth.updateUser(user.uid, { displayName: name });
     }
+  } catch {
+    user = await auth.createUser({
+      email,
+      displayName: name || undefined,
+      emailVerified: false,
+      disabled: false
+    });
+  }
 
-    const email = String(reg.email || "");
-    const name = String(reg.name || "");
-    const branchName = String(reg.branchName || "");
-    const branchCode = reg.branchCode ? String(reg.branchCode) : null;
+  // 커스텀 클레임 부여
+  await auth.setCustomUserClaims(user.uid, { role: "BRANCH", branchId });
 
-    // branchId 결정
-    const branchId = branchCode || `BR_${ref.id}`;
+  // ✅ branches/{branchId}: 주소 3필드만 저장
+  await db
+    .collection("branches")
+    .doc(branchId)
+    .set(
+      {
+        branchId,
+        name: branchName || branchId,
+        tel: branchTel || null,
+        address, // roadAddr/zipNo/detail
+        status: "ACTIVE",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      },
+      { merge: true }
+    );
 
-    // 사용자 생성/갱신
-    let user;
-    try {
-      user = await auth.getUserByEmail(email);
-      if (name && user.displayName !== name) {
-        await auth.updateUser(user.uid, { displayName: name });
-      }
-    } catch {
-      user = await auth.createUser({
-        email,
-        displayName: name || undefined,
-        emailVerified: false,
-        disabled: false,
-      });
-    }
-
-    // 커스텀 클레임 부여
-    await auth.setCustomUserClaims(user.uid, { role: "BRANCH", branchId });
-
-    // users 문서 생성/갱신
-    await db.collection("users").doc(user.uid).set(
+  // users/{uid} 캐시
+  await db
+    .collection("users")
+    .doc(user.uid)
+    .set(
       {
         email,
         name,
         role: "BRANCH",
         branchId,
-        branchName,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        branchName: branchName || branchId,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
       },
       { merge: true }
     );
 
-    // registrations 상태 갱신
-    await ref.update({
-      status: "APPROVED",
-      approvedAt: admin.firestore.FieldValue.serverTimestamp(),
-      approvedBy: context.auth!.uid,
-    });
-
-    return { message: "approved", uid: user.uid, branchId };
+  // registrations 상태 갱신
+  await ref.update({
+    status: "APPROVED",
+    approvedAt: admin.firestore.FieldValue.serverTimestamp(),
+    approvedBy: context.auth!.uid
   });
 
-export const hqRejectRegistration = functions
-  .region(region)
-  .https.onCall(async (data, context) => {
-    assertHQ(context);
-    const docId = String(data.docId || "");
-    const reason = data.reason ? String(data.reason) : "";
-    if (!docId) throw new functions.https.HttpsError("invalid-argument", "docId required");
-
-    const { ref, data: reg } = await loadRegistration(docId);
-    if (reg.status !== "PENDING") {
-      throw new functions.https.HttpsError("failed-precondition", "already processed");
-    }
-
-    await ref.update({
-      status: "REJECTED",
-      rejectReason: reason,
-      rejectedAt: admin.firestore.FieldValue.serverTimestamp(),
-      rejectedBy: context.auth!.uid,
-    });
-
-    return { message: "rejected" };
+  // HQ 전체 알림
+  await sendToTopic(HQ_TOPIC, "지사 가입 승인 완료", `${branchName || branchId || user.uid} 승인 처리`, {
+    type: "REGISTRATION_APPROVED",
+    uid: user.uid,
+    branchId,
+    eventId: `reg-approved:${user.uid}:${Date.now()}`
   });
 
-export const hqResetRegistration = functions
-  .region(region)
-  .https.onCall(async (data, context) => {
-    assertHQ(context);
-    const docId = String(data.docId || "");
-    if (!docId) throw new functions.https.HttpsError("invalid-argument", "docId required");
+  return { message: "approved", uid: user.uid, branchId };
+});
 
-    const { ref } = await loadRegistration(docId);
-    await ref.update({
-      status: "PENDING",
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-    return { message: "reset to PENDING" };
+/** 가입 반려 */
+export const hqRejectRegistration = functions.region(region).https.onCall(async (data, context) => {
+  assertHQ(context);
+  const docId = String(data.docId || "");
+  const reason = data.reason ? String(data.reason) : "";
+  if (!docId) throw new functions.https.HttpsError("invalid-argument", "docId required");
+
+  const { ref, data: reg } = await loadRegistration(docId);
+  if (reg.status !== "PENDING") {
+    throw new functions.https.HttpsError("failed-precondition", "already processed");
+  }
+
+  await ref.update({
+    status: "REJECTED",
+    rejectReason: reason,
+    rejectedAt: admin.firestore.FieldValue.serverTimestamp(),
+    rejectedBy: context.auth!.uid
   });
 
-/** ───────────────────────── HQ: 주문 상태 전이 ─────────────────────────
- * 프로젝트 규격: PLACED / APPROVED / REJECTED / SHIPPED / DELIVERED
- */
-export const hqUpdateOrderStatus = functions
-  .region(region)
-  .https.onCall(async (data, context) => {
-    assertHQ(context);
-    const orderId = String(data.orderId || "");
-    const next = String(data.nextStatus || "").toUpperCase();
-    if (!orderId || !next) {
-      throw new functions.https.HttpsError("invalid-argument", "orderId, nextStatus required");
-    }
-
-    const allowed = new Set(["PLACED", "APPROVED", "REJECTED", "SHIPPED", "DELIVERED"]);
-    if (!allowed.has(next)) {
-      throw new functions.https.HttpsError("invalid-argument", "invalid status");
-    }
-
-    const canTransit = (from: string, to: string) => {
-      const F = (from || "PLACED").toUpperCase();
-      const T = to.toUpperCase();
-      if (F === "PLACED") return T === "APPROVED" || T === "REJECTED";
-      if (F === "APPROVED") return T === "SHIPPED";
-      if (F === "SHIPPED") return T === "DELIVERED";
-      return false;
-    };
-
-    const ref = db.collection("orders").doc(orderId);
-    // 트랜잭션 내에서 지사 토픽 정보/표시 텍스트에 필요한 필드를 회수해서 반환
-    const result = await db.runTransaction(async (tx) => {
-      const snap = await tx.get(ref);
-      if (!snap.exists) {
-        throw new functions.https.HttpsError("not-found", "order not found");
-      }
-      const order = snap.data()!;
-      const prev = (order.status || "PLACED").toString().toUpperCase();
-      const branchId = String(order.branchId || "");
-      const branchName = String(order.branchName || "-");
-
-      if (!canTransit(prev, next)) {
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          `transition not allowed: ${prev} → ${next}`
-        );
-      }
-
-      const now = admin.firestore.FieldValue.serverTimestamp();
-      tx.update(ref, {
-        status: next,
-        updatedAt: now,
-        updatedBy: context.auth!.uid,
-        statusHistory: admin.firestore.FieldValue.arrayUnion({
-          at: now,
-          by: context.auth!.uid,
-          from: prev,
-          to: next,
-        }),
-      });
-
-      return { from: prev, to: next, branchId, branchName };
-    });
-
-    // 트랜잭션 성공 후: 해당 지사 토픽으로 알림 전송
-    if (result.branchId) {
-      const topic = `branch_${result.branchId}`;
-      const title = "주문 상태 변경";
-      const body = `지사 ${result.branchName} 주문 ${orderId} 상태가 ${result.to} 로 변경되었습니다.`;
-      await sendToTopic(topic, title, body, {
-        type: "ORDER_STATUS",
-        orderId,
-        branchId: result.branchId,
-        status: result.to,
-      });
-    }
-
-    return { ok: true, message: "status updated", ...result };
+  // (선택) HQ 공유
+  await sendToTopic(HQ_TOPIC, "지사 가입 반려", `${reg.branchName || reg.email || docId} 반려 처리`, {
+    type: "REGISTRATION_REJECTED",
+    uid: docId,
+    eventId: `reg-rejected:${docId}:${Date.now()}`
   });
 
-/** ───────────────────────── PortOne 결제 검증(onCall) + Webhook(옵션) ─────────────────────────
- * 환경 변수: firebase functions:config:set portone.key="___" portone.secret="___"
- */
-const PORTONE_API_KEY =
-  process.env.PORTONE_API_KEY || (functions.config().portone && functions.config().portone.key);
-const PORTONE_API_SECRET =
-  process.env.PORTONE_API_SECRET || (functions.config().portone && functions.config().portone.secret);
+  return { message: "rejected" };
+});
 
-async function getPortOneToken(): Promise<string> {
-  const res = await axios.post("https://api.iamport.kr/users/getToken", {
-    imp_key: PORTONE_API_KEY,
-    imp_secret: PORTONE_API_SECRET,
+/** 가입 상태 리셋 */
+export const hqResetRegistration = functions.region(region).https.onCall(async (data, context) => {
+  assertHQ(context);
+  const docId = String(data.docId || "");
+  if (!docId) throw new functions.https.HttpsError("invalid-argument", "docId required");
+
+  const { ref } = await loadRegistration(docId);
+  await ref.update({
+    status: "PENDING",
+    updatedAt: admin.firestore.FieldValue.serverTimestamp()
   });
-  const token = res.data?.response?.access_token;
-  if (!token) throw new Error("PortOne token error");
-  return token;
-}
+  return { message: "reset to PENDING" };
+});
 
-async function getPayment(impUid: string, token: string) {
-  const res = await axios.get(`https://api.iamport.kr/payments/${impUid}`, {
-    headers: { Authorization: token },
-  });
-  return res.data.response;
-}
+// ──────────────────────────────────────────────────────────────
+// ② HQ: 주문 상태 전이 (PLACED/APPROVED/REJECTED/SHIPPED/DELIVERED)
+// ──────────────────────────────────────────────────────────────
+export const hqUpdateOrderStatus = functions.region(region).https.onCall(async (data, context) => {
+  assertHQ(context);
+  const orderId = String(data.orderId || "");
+  const next = String(data.nextStatus || "").toUpperCase();
+  if (!orderId || !next) {
+    throw new functions.https.HttpsError("invalid-argument", "orderId, nextStatus required");
+  }
 
-/** onCall: 클라에서 impUid/merchantUid 전달 → PortOne 검증 후 orders/{orderId} 반영 + HQ 알림 */
-export const verifyPortOnePayment = functions
-  .region(region)
-  .https.onCall(async (data, context) => {
-    // 인증 사용자는 BRANCH(본인 주문), HQ 모두 호출 가능하도록 별도 권한 제한은 두지 않음
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "auth required");
-    }
+  const allowed = new Set(["PLACED", "APPROVED", "REJECTED", "SHIPPED", "DELIVERED"]);
+  if (!allowed.has(next)) {
+    throw new functions.https.HttpsError("invalid-argument", "invalid status");
+  }
 
-    const orderId = String(data?.orderId || "");
-    const merchantUid = String(data?.merchantUid || "");
-    const impUid = String(data?.impUid || "");
+  const canTransit = (from: string, to: string) => {
+    const F = (from || "PLACED").toUpperCase();
+    const T = to.toUpperCase();
+    if (F === "PLACED") return T === "APPROVED" || T === "REJECTED";
+    if (F === "APPROVED") return T === "SHIPPED";
+    if (F === "SHIPPED") return T === "DELIVERED";
+    return false;
+  };
 
-    if (!orderId || !merchantUid || !impUid) {
-      throw new functions.https.HttpsError("invalid-argument", "params missing");
-    }
-
-    // 주문 정보 선조회(브랜치/금액/지사명 확보 → 알림 본문에 사용)
-    const orderSnap = await db.collection("orders").doc(orderId).get();
-    if (!orderSnap.exists) {
-      throw new functions.https.HttpsError("not-found", "order not found");
-    }
-    const order = orderSnap.data()!;
+  const ref = db.collection("orders").doc(orderId);
+  const result = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new functions.https.HttpsError("not-found", "order not found");
+    const order = snap.data()!;
+    const prev = (order.status || "PLACED").toString().toUpperCase();
     const branchId = String(order.branchId || "");
     const branchName = String(order.branchName || "-");
-    const totalAmount = Number(order.totalAmount || 0);
 
-    const token = await getPortOneToken();
-    const payment = await getPayment(impUid, token);
+    if (!canTransit(prev, next)) {
+      throw new functions.https.HttpsError("failed-precondition", `transition not allowed: ${prev} → ${next}`);
+    }
 
-    const ok = payment?.status === "paid" && payment?.merchant_uid === merchantUid;
-    const method = payment?.pay_method || null;
-    const paidAtMs = payment?.paid_at ? payment.paid_at * 1000 : 0;
-
-    // Firestore 업데이트
-    await db.collection("orders").doc(orderId).update({
-      merchantUid,
-      paymentStatus: ok ? "PAID" : "FAILED",
-      paymentTxId: impUid,
-      paymentMethod: method,
-      paidAt: ok ? admin.firestore.Timestamp.fromMillis(paidAtMs) : null,
-      paymentMessage: ok ? "결제 완료(PortOne)" : `검증 실패: ${payment?.status ?? "unknown"}`,
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    tx.update(ref, {
+      status: next,
+      updatedAt: now,
+      updatedBy: context.auth!.uid,
+      statusHistory: admin.firestore.FieldValue.arrayUnion({
+        at: now,
+        by: context.auth!.uid,
+        from: prev,
+        to: next
+      })
     });
 
-    // 결제 성공 → HQ 토픽으로 알림
+    return { from: prev, to: next, branchId, branchName };
+  });
+
+  // 지사 토픽 알림
+  if (result.branchId) {
+    const topic = BRANCH_TOPIC(result.branchId);
+    const title = "주문 상태 변경";
+    const body = `지사 ${result.branchName} 주문 ${orderId} 상태가 ${result.to}로 변경되었습니다.`;
+    await sendToTopic(topic, title, body, {
+      type: "ORDER_STATUS",
+      orderId,
+      branchId: result.branchId,
+      status: result.to,
+      eventId: `order-status:${orderId}:${result.to}:${Date.now()}`
+    });
+  }
+
+  return { ok: true, message: "status updated", ...result };
+});
+
+// ──────────────────────────────────────────────────────────────
+// ③ 이니시스 결제 검증 (Callable) — { orderId, tid } 입력
+//    서버가 INIAPI로 TID 재조회하여 확정
+// ──────────────────────────────────────────────────────────────
+export const verifyInicisPayment = functions.region(region).https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "auth required");
+
+  const orderId = String(data?.orderId || "");
+  const tid = String(data?.tid || "");
+  if (!orderId || !tid) {
+    throw new functions.https.HttpsError("invalid-argument", "orderId, tid required");
+  }
+
+  const orderRef = db.collection("orders").doc(orderId);
+  const snap = await orderRef.get();
+  if (!snap.exists) throw new functions.https.HttpsError("not-found", "order not found");
+
+  const order = snap.data()!;
+  const expected = Number(order.totalAmount ?? 0);
+  const branchId = String(order.branchId || "");
+  const branchName = String(order.branchName || "-");
+
+  const client = new InicisClient();
+  const vr = await client.verifyByTid(tid);
+
+  const ok = vr.ok && vr.status === "paid" && (!expected || !vr.amount || vr.amount === expected);
+
+  await orderRef.update({
+    paymentGateway: "INICIS",
+    paymentTid: tid,
+    paymentStatus: ok ? "PAID" : "FAILED",
+    paidAt: ok ? admin.firestore.FieldValue.serverTimestamp() : null,
+    paymentMessage: ok
+      ? "결제 완료(INICIS verify)"
+      : `검증 실패: ${vr.status} (amt=${vr.amount ?? "?"}, expected=${expected})`
+  });
+
+  if (ok) {
+    await sendToTopic(HQ_TOPIC, "결제 승인", `${branchName} · 주문 ${orderId} · ${expected.toLocaleString("ko-KR")}원`, {
+      type: "PAYMENT_APPROVED",
+      orderId,
+      branchId,
+      paymentStatus: "PAID",
+      eventId: `paid:${orderId}:${tid}`
+    });
+  }
+
+  return { ok, status: vr.status, amount: vr.amount ?? null, tid };
+});
+
+// ──────────────────────────────────────────────────────────────
+// ④ 이니시스 notiURL(Webhook) — x-www-form-urlencoded
+//    성공 처리 시 "OK" 그대로 응답(재전송 중지)
+// ──────────────────────────────────────────────────────────────
+const app = express();
+app.use(express.urlencoded({ extended: true }));
+
+app.post("/inicis/noti", async (req, res) => {
+  try {
+    // (권장) 이니시스 발신 IP 화이트리스트 검증 로직 추가 가능
+    const { ok, tid, orderId, amount } = parseNoti(req.body);
+    if (!orderId || !tid) return res.status(200).send("INVALID"); // 재시도 유도
+
+    const ref = db.collection("orders").doc(orderId);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      console.warn("inicis noti for unknown order", orderId, tid);
+      return res.status(200).send("OK"); // 재전송 방지
+    }
+
     if (ok) {
-      const title = "지사 결제 완료";
-      const body = `${branchName} · 주문 ${orderId} · ${totalAmount.toLocaleString("ko-KR")}원`;
-      await sendToTopic("hq", title, body, {
-        type: "ORDER_PAID",
+      await ref.update({
+        paymentGateway: "INICIS",
+        paymentTid: tid,
+        paymentStatus: "PAID",
+        paidAt: admin.firestore.FieldValue.serverTimestamp(),
+        paymentMessage: "notiURL 승인"
+      });
+
+      const order = snap.data()!;
+      const branchName = String(order.branchName || "-");
+      const branchId = String(order.branchId || "");
+      const finalAmt = Number(order.totalAmount ?? amount ?? 0);
+
+      await sendToTopic(HQ_TOPIC, "결제 승인", `${branchName} · 주문 ${orderId} · ${finalAmt.toLocaleString("ko-KR")}원`, {
+        type: "PAYMENT_APPROVED",
         orderId,
         branchId,
-        status: String(order.status || "PLACED"),
         paymentStatus: "PAID",
+        eventId: `paid:${orderId}:${tid}`
+      });
+    } else {
+      await ref.update({
+        paymentGateway: "INICIS",
+        paymentTid: tid,
+        paymentStatus: "FAILED",
+        paymentMessage: `notiURL status=${req.body?.P_STATUS ?? "?"}`
       });
     }
 
-    return {
-      ok,
-      method,
-      paidAt: paidAtMs,
-      impUid,
-      message: ok ? "OK" : "NOT_PAID",
-    };
-  });
+    return res.status(200).send("OK"); // 반드시 "OK"
+  } catch (e) {
+    console.error(e);
+    return res.status(200).send("ERR"); // 재시도 유도
+  }
+});
 
-/** Webhook(옵션): PortOne 대시보드에 등록 시 상태 동기화 자동화 + HQ 알림 */
-export const portoneWebhook = functions
+export const inicisWebhook = functions.region(region).https.onRequest(app);
+
+// ──────────────────────────────────────────────────────────────
+// ⑤ 신규 가입 신청 트리거: HQ 알림 + 장치 락(멱등)
+// ──────────────────────────────────────────────────────────────
+export const onRegistrationCreated = functions
   .region(region)
-  .https.onRequest(async (req, res) => {
-    try {
-      const { imp_uid, merchant_uid, status } = req.body || {};
-      if (!imp_uid || !merchant_uid) {
-        res.status(400).send({ ok: false, error: "bad request" });
-        return;
-      }
-      const token = await getPortOneToken();
-      const payment = await getPayment(imp_uid, token);
-      const ok = payment?.status === "paid";
-      // merchant_uid 규칙: muid_{ts}_{orderId}
-      const orderId = (merchant_uid as string).split("_").pop();
+  .firestore.document("registrations/{uid}")
+  .onCreate(async (snap, ctx) => {
+    const d = snap.data() || {};
+    const uid = ctx.params.uid as string;
+    const email = String(d.email || "");
+    const tel = String(d.branchTel || "");
+    const installationId = (d.installationId ? String(d.installationId) : "").trim();
 
-      if (orderId) {
-        const ref = db.collection("orders").doc(orderId);
-        const snap = await ref.get();
-        const order = snap.data() || {};
-        const branchName = String(order.branchName || "-");
-        const totalAmount = Number(order.totalAmount || 0);
-        const branchId = String(order.branchId || "");
+    // HQ 토픽 알림
+    await sendToTopic(HQ_TOPIC, "새 지사 가입 신청", `${email}${tel ? ` (${tel})` : ""}`, {
+      type: "REGISTRATION_CREATED",
+      uid,
+      email,
+      branchTel: tel,
+      eventId: `reg-created:${uid}:${snap.createTime.toMillis?.() ?? Date.now()}`
+    });
 
-        await ref.update({
-          merchantUid: merchant_uid,
-          paymentStatus: ok ? "PAID" : (status?.toUpperCase() || "FAILED"),
-          paymentTxId: imp_uid,
-          paymentMethod: payment?.pay_method || null,
-          paidAt:
-            ok && payment?.paid_at
-              ? admin.firestore.Timestamp.fromMillis(payment.paid_at * 1000)
-              : null,
-          paymentMessage: ok ? "Webhook 결제 완료" : `Webhook 상태: ${status || "unknown"}`,
+    // 장치 락(멱등)
+    if (installationId) {
+      const devRef = db.collection("devices").doc(installationId);
+      const devSnap = await devRef.get();
+      if (!devSnap.exists) {
+        await devRef.set({
+          registeredUid: uid,
+          email,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          via: "registration_onCreate"
         });
-
-        // 결제 성공 → HQ 토픽 알림
-        if (ok) {
-          const title = "지사 결제 완료";
-          const body = `${branchName} · 주문 ${orderId} · ${totalAmount.toLocaleString("ko-KR")}원`;
-          await sendToTopic("hq", title, body, {
-            type: "ORDER_PAID",
-            orderId,
-            branchId,
-            status: String(order.status || "PLACED"),
-            paymentStatus: "PAID",
-          });
-        }
       }
-      res.status(200).send({ ok: true });
-    } catch (e: any) {
-      console.error(e);
-      res.status(500).send({ ok: false, error: e.message });
     }
   });
-
-  /** ───────────────────────── 신규 가입 신청: HQ 알림 + 장치 락 ───────────────────────── */
-  /**
-   * registrations/{uid} 문서가 생성되면:
-   *  - HQ 토픽("hq")으로 푸시 알림 전송
-   *  - registration 문서에 installationId가 있으면 devices/{installationId} 락 문서를 (없을 때만) 생성
-   *    → 한 기기에서 2번 이상 회원가입 시도 방지(서버 보강)
-   */
-  export const onRegistrationCreated = functions
-    .region(region)
-    .firestore.document("registrations/{uid}")
-    .onCreate(async (snap, ctx) => {
-      const d = snap.data() || {};
-      const uid = ctx.params.uid as string;
-      const email = String(d.email || "");
-      const tel = String(d.branchTel || "");
-      const installationId = (d.installationId ? String(d.installationId) : "").trim();
-
-      // 1) HQ 토픽으로 알림
-      await sendToTopic(
-        "hq",
-        "새 지사 가입 신청",
-        `${email}${tel ? ` (${tel})` : ""}`,
-        {
-          type: "REGISTRATION_CREATED",
-          uid,
-          email,
-          branchTel: tel,
-        }
-      );
-
-      // 2) 장치 락(선택 보강) — registration에 installationId가 실려있으면,
-      //    해당 장치 문서가 없을 때만 생성해 둔다(멱등).
-      if (installationId) {
-        const devRef = db.collection("devices").doc(installationId);
-        const devSnap = await devRef.get();
-        if (!devSnap.exists) {
-          await devRef.set({
-            registeredUid: uid,
-            email,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            via: "registration_onCreate",
-          });
-        }
-      }
-    });

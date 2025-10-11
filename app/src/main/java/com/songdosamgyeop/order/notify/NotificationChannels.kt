@@ -15,7 +15,7 @@ object NotificationChannels {
             val ch = NotificationChannel(
                 Orders,
                 context.getString(R.string.channel_orders_name),
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = context.getString(R.string.channel_orders_desc)
             }
