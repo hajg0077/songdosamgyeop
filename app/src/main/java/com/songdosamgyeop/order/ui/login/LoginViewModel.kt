@@ -6,7 +6,6 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.songdosamgyeop.order.core.model.UserRole
-import com.songdosamgyeop.order.Env
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,47 +16,57 @@ class LoginViewModel @Inject constructor(
     private val db: FirebaseFirestore
 ) : ViewModel() {
 
-    /** 이메일/비밀번호 로그인 */
     suspend fun signIn(email: String, password: String) {
         auth.signInWithEmailAndPassword(email.trim(), password).await()
     }
 
-    /**
-     * 지사 회원가입(신청):
-     * - Firebase Auth 계정 생성
-     * - registrations 컬렉션에 신청서 생성(status=PENDING)
-     *   { email, name?, branchTel, status, userUid, createdAt }
-     * - (옵션) users/{uid} 문서를 미리 최소 필드로 생성해도 되지만, 쓰기는 Functions에서 하는 게 안전함
-     */
-    suspend fun signUpBranch(email: String, password: String, phone: String?) {
-        val result = auth.createUserWithEmailAndPassword(email.trim(), password).await()
-        val user = result.user ?: error("계정 생성 실패")
-
-        // 신청서 작성 (누구나 create 가능 규칙 가정)
-        val reg = mapOf(
-            "email" to email.trim(),
-            "name" to (user.displayName ?: ""),    // 없으면 빈값
-            "branchName" to null,                  // HQ가 지정
-            "branchCode" to null,                  // HQ가 지정 시 입력
-            "status" to "PENDING",
-            "userUid" to user.uid,
-            "createdAt" to FieldValue.serverTimestamp(),
-            "branchTel" to (phone?.trim())
-        )
-        db.collection("registrations").document(user.uid).set(reg, SetOptions.merge()).await()
-
-        // (선택) Functions 사용이 켜져 있으면 서버 로직 호출 가능
-        if (Env.FUNCTIONS_ENABLED) {
-            // ex) requestBranchRegistration callable 호출 etc. (이미 Functions 구축되어 있다면)
+    /** 같은 기기에서 이미 가입한 적 있는지 검사 */
+    private suspend fun checkDeviceLock(installationId: String) {
+        val devRef = db.collection("devices").document(installationId)
+        val snap = devRef.get().await()
+        if (snap.exists()) {
+            throw IllegalStateException("이 기기에서는 이미 회원가입이 진행되었습니다.")
         }
     }
 
-    /** 현재 로그인 사용자의 역할을 가져온다. 없으면 UNKNOWN 반환 */
+    /**
+     * 지사 회원가입(신청):
+     * - (1) devices/{installationId} 존재 여부 확인 → 있으면 실패
+     * - (2) Auth 계정 생성
+     * - (3) registrations/{uid} 생성 (status=PENDING)
+     * - (4) devices/{installationId} 생성(서버 규칙상 최초 1회만 허용)
+     */
+    suspend fun signUpBranch(email: String, password: String, phone: String?, installationId: String) {
+        // (1) 중복 가입 방지 사전 체크
+        checkDeviceLock(installationId)
+
+        // (2) 계정 생성
+        val result = auth.createUserWithEmailAndPassword(email.trim(), password).await()
+        val user = result.user ?: error("계정 생성 실패")
+
+        // (3) 신청서
+        val reg = mapOf(
+            "email" to email.trim(),
+            "status" to "PENDING",
+            "userUid" to user.uid,
+            "branchTel" to (phone ?: ""),
+            "createdAt" to FieldValue.serverTimestamp()
+        )
+        db.collection("registrations").document(user.uid).set(reg, SetOptions.merge()).await()
+
+        // (4) 장치 락(규칙상 최초 1회만 성공)
+        val dev = mapOf(
+            "registeredUid" to user.uid,
+            "email" to email.trim(),
+            "createdAt" to FieldValue.serverTimestamp()
+        )
+        db.collection("devices").document(installationId).set(dev).await()
+    }
+
     suspend fun getCurrentUserRole(): UserRole {
         val uid = auth.currentUser?.uid ?: return UserRole.UNKNOWN
         val snap = db.collection("users").document(uid).get().await()
-        val roleStr = snap.getString("role").orEmpty()
-        return when (roleStr) {
+        return when (snap.getString("role").orEmpty()) {
             "HQ" -> UserRole.HQ
             "BRANCH" -> UserRole.BRANCH
             else -> UserRole.UNKNOWN

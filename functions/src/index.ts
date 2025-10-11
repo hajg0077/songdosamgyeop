@@ -377,3 +377,49 @@ export const portoneWebhook = functions
       res.status(500).send({ ok: false, error: e.message });
     }
   });
+
+  /** ───────────────────────── 신규 가입 신청: HQ 알림 + 장치 락 ───────────────────────── */
+  /**
+   * registrations/{uid} 문서가 생성되면:
+   *  - HQ 토픽("hq")으로 푸시 알림 전송
+   *  - registration 문서에 installationId가 있으면 devices/{installationId} 락 문서를 (없을 때만) 생성
+   *    → 한 기기에서 2번 이상 회원가입 시도 방지(서버 보강)
+   */
+  export const onRegistrationCreated = functions
+    .region(region)
+    .firestore.document("registrations/{uid}")
+    .onCreate(async (snap, ctx) => {
+      const d = snap.data() || {};
+      const uid = ctx.params.uid as string;
+      const email = String(d.email || "");
+      const tel = String(d.branchTel || "");
+      const installationId = (d.installationId ? String(d.installationId) : "").trim();
+
+      // 1) HQ 토픽으로 알림
+      await sendToTopic(
+        "hq",
+        "새 지사 가입 신청",
+        `${email}${tel ? ` (${tel})` : ""}`,
+        {
+          type: "REGISTRATION_CREATED",
+          uid,
+          email,
+          branchTel: tel,
+        }
+      );
+
+      // 2) 장치 락(선택 보강) — registration에 installationId가 실려있으면,
+      //    해당 장치 문서가 없을 때만 생성해 둔다(멱등).
+      if (installationId) {
+        const devRef = db.collection("devices").doc(installationId);
+        const devSnap = await devRef.get();
+        if (!devSnap.exists) {
+          await devRef.set({
+            registeredUid: uid,
+            email,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            via: "registration_onCreate",
+          });
+        }
+      }
+    });

@@ -15,6 +15,7 @@ import com.songdosamgyeop.order.ui.branch.BranchActivity
 import com.songdosamgyeop.order.ui.hq.HqActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @AndroidEntryPoint
 class LoginFragment : Fragment(R.layout.fragment_login) {
@@ -44,17 +45,20 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         }
 
         btnSignup.setOnClickListener {
-            val email = etEmail.text?.toString().orEmpty()
-            val pw = etPw.text?.toString().orEmpty()
-
-            // 1) 전화번호 시트 띄워서 입력 받기
             PhoneInputBottomSheet { phone ->
-                // 2) 입력 완료되면 가입 진행
+                val email = etEmail.text?.toString().orEmpty()
+                val pw = etPw.text?.toString().orEmpty()
+
                 lifecycleScope.launch {
-                    runCatching { vm.signUpBranch(email, pw, phone) }
+                    // 설치 ID 가져오기
+                    val installationId = com.google.firebase.installations.FirebaseInstallations.getInstance()
+                        .id.await()
+
+                    runCatching { vm.signUpBranch(email, pw, phone, installationId) }
                         .onSuccess {
+                            // ✅ 로컬 알림(간단 토스트) — HQ 푸시는 Functions가 전송
                             Toast.makeText(requireContext(), "신청 완료! 본사 승인 대기", Toast.LENGTH_LONG).show()
-                            toPending()
+                            // 필요 시 여기서 바로 Splash로 이동해 재판단해도 OK
                         }
                         .onFailure { e ->
                             Toast.makeText(requireContext(), e.message ?: "회원가입 실패", Toast.LENGTH_LONG).show()
