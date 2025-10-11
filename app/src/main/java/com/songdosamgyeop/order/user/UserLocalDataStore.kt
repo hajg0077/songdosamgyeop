@@ -21,10 +21,10 @@ class UserLocalDataStore @Inject constructor(
     private object Keys {
         val UID = stringPreferencesKey("uid")
         val EMAIL = stringPreferencesKey("email")
-        val NAME = stringPreferencesKey("name")
         val ROLE = stringPreferencesKey("role")
         val BRANCH_ID = stringPreferencesKey("branchId")
         val BRANCH_NAME = stringPreferencesKey("branchName")
+        val BRANCH_TEL = stringPreferencesKey("branchTel")
     }
 
     fun getProfileFlow(): Flow<UserProfile?> =
@@ -35,10 +35,10 @@ class UserLocalDataStore @Inject constructor(
                 UserProfile(
                     uid = uid,
                     email = p[Keys.EMAIL].orEmpty(),
-                    name = p[Keys.NAME].orEmpty(),
                     role = p[Keys.ROLE].orEmpty(),
                     branchId = p[Keys.BRANCH_ID],
-                    branchName = p[Keys.BRANCH_NAME]
+                    branchName = p[Keys.BRANCH_NAME],
+                    branchTel = p[Keys.BRANCH_TEL]
                 )
             }
 
@@ -46,11 +46,11 @@ class UserLocalDataStore @Inject constructor(
         appContext.userPrefsDataStore.edit { p: MutablePreferences -> // ✅ MutablePreferences
             p[Keys.UID] = profile.uid
             p[Keys.EMAIL] = profile.email
-            p[Keys.NAME] = profile.name
             p[Keys.ROLE] = profile.role
 
             if (profile.branchId != null) p[Keys.BRANCH_ID] = profile.branchId else p.remove(Keys.BRANCH_ID) // ✅ remove OK
             if (profile.branchName != null) p[Keys.BRANCH_NAME] = profile.branchName else p.remove(Keys.BRANCH_NAME)
+            if (profile.branchTel != null) p[Keys.BRANCH_TEL] = profile.branchTel else p.remove(Keys.BRANCH_TEL) // ← 추가
         }
     }
 

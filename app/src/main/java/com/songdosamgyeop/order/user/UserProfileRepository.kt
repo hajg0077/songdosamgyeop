@@ -32,10 +32,10 @@ class UserProfileRepository @Inject constructor(
                     val p = UserProfile(
                         uid = user.uid,
                         email = (m["email"] as? String).orEmpty(),
-                        name = (m["name"] as? String).orEmpty(),
                         role = (m["role"] as? String).orEmpty(),
                         branchId = m["branchId"] as? String,
-                        branchName = m["branchName"] as? String
+                        branchName = m["branchName"] as? String,
+                        branchTel = m["branchTel"] as? String
                     )
                     trySend(p)
                 } else {

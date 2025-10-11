@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.google.android.play.integrity.internal.b
 import com.songdosamgyeop.order.Env
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.payment.PaymentViewModel
@@ -46,6 +47,12 @@ class InicisPaymentActivity : AppCompatActivity() {
     private var amount: Long = 0L
     private lateinit var title: String
 
+    private lateinit var branchName: String
+
+    private var buyerEmail: String = ""
+    private var buyerTel: String = ""
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_inicis_payment)
@@ -58,6 +65,9 @@ class InicisPaymentActivity : AppCompatActivity() {
         orderId = intent.getStringExtra("orderId") ?: run { finish(); return }
         title = intent.getStringExtra("title") ?: "주문 결제"
         amount = intent.getLongExtra("amount", 0L)
+        branchName = intent.getStringExtra("branchName") ?: "주문 결제"
+        buyerEmail = intent.getStringExtra("buyerEmail") ?: ""
+        buyerTel = intent.getStringExtra("buyerTel") ?: ""
 
         txtTitle.text = "$title - ${nf.format(amount)}원"
 

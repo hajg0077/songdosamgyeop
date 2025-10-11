@@ -1,59 +1,66 @@
-// com/songdosamgyeop/order/ui/login/LoginViewModel.kt
 package com.songdosamgyeop.order.ui.login
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.songdosamgyeop.order.core.model.UserRole
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import com.songdosamgyeop.order.Env
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
+import dagger.hilt.android.lifecycle.HiltViewModel
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val auth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
+    private val db: FirebaseFirestore
 ) : ViewModel() {
 
+    /** 이메일/비밀번호 로그인 */
+    suspend fun signIn(email: String, password: String) {
+        auth.signInWithEmailAndPassword(email.trim(), password).await()
+    }
+
     /**
-     * 개발용 더미 로그인:
-     * - Firebase Anonymous 로그인
-     * - users/{uid}에 role, (branch의 경우 branchId/branchName) 병합 저장
-     * - 서버시간 기록(lastLoginAt/createdAt)
+     * 지사 회원가입(신청):
+     * - Firebase Auth 계정 생성
+     * - registrations 컬렉션에 신청서 생성(status=PENDING)
+     *   { email, name?, branchTel, status, userUid, createdAt }
+     * - (옵션) users/{uid} 문서를 미리 최소 필드로 생성해도 되지만, 쓰기는 Functions에서 하는 게 안전함
      */
-    suspend fun signInDummy(role: UserRole) {
-        // 이미 로그인 되어 있으면 재사용(익명만)하고, 아니면 익명 로그인
-        val user = auth.currentUser?.takeIf { it.isAnonymous }
-            ?: auth.signInAnonymously().await().user
-            ?: error("Anonymous sign-in failed (user null)")
+    suspend fun signUpBranch(email: String, password: String, phone: String?) {
+        val result = auth.createUserWithEmailAndPassword(email.trim(), password).await()
+        val user = result.user ?: error("계정 생성 실패")
 
-        val users = firestore.collection("users").document(user.uid)
-
-        val base = mutableMapOf(
-            "email" to "",
-            "name" to "DevUser",
-            "role" to when (role) { UserRole.HQ -> "HQ"; UserRole.BRANCH -> "BRANCH" else -> "NONE"},
-            "lastLoginAt" to FieldValue.serverTimestamp()
+        // 신청서 작성 (누구나 create 가능 규칙 가정)
+        val reg = mapOf(
+            "email" to email.trim(),
+            "name" to (user.displayName ?: ""),    // 없으면 빈값
+            "branchName" to null,                  // HQ가 지정
+            "branchCode" to null,                  // HQ가 지정 시 입력
+            "status" to "PENDING",
+            "userUid" to user.uid,
+            "createdAt" to FieldValue.serverTimestamp(),
+            "branchTel" to (phone?.trim())
         )
+        db.collection("registrations").document(user.uid).set(reg, SetOptions.merge()).await()
 
-        // 지사 더미 필드 (앱에서 branch 라벨/필터에 사용)
-        if (role == UserRole.BRANCH) {
-            base["branchId"] = "BRANCH_DEV"
-            base["branchName"] = "개발지사"
+        // (선택) Functions 사용이 켜져 있으면 서버 로직 호출 가능
+        if (Env.FUNCTIONS_ENABLED) {
+            // ex) requestBranchRegistration callable 호출 etc. (이미 Functions 구축되어 있다면)
         }
+    }
 
-        // createdAt이 없는 최초 사용자만 createdAt 세팅
-        firestore.runTransaction { tx ->
-            val snap = tx.get(users)
-            if (!snap.exists()) {
-                base["createdAt"] = FieldValue.serverTimestamp()
-            }
-            tx.set(users, base, SetOptions.merge())
-        }.await()
-
-        Log.d("LoginVM", "Dummy sign-in as $role, uid=${user.uid}")
+    /** 현재 로그인 사용자의 역할을 가져온다. 없으면 UNKNOWN 반환 */
+    suspend fun getCurrentUserRole(): UserRole {
+        val uid = auth.currentUser?.uid ?: return UserRole.UNKNOWN
+        val snap = db.collection("users").document(uid).get().await()
+        val roleStr = snap.getString("role").orEmpty()
+        return when (roleStr) {
+            "HQ" -> UserRole.HQ
+            "BRANCH" -> UserRole.BRANCH
+            else -> UserRole.UNKNOWN
+        }
     }
 }

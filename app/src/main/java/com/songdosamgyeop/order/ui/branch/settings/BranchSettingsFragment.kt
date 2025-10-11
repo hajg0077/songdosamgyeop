@@ -27,7 +27,6 @@ class BranchSettingsFragment : Fragment(R.layout.fragment_branch_settings) {
         val user = auth.currentUser
         b.tvEmail.text = user?.email ?: getString(R.string.not_available)
         b.tvBranch.text = "송도 (BR001)" // TODO: branchName/branchId 바인딩
-        b.tvRole.text = "BRANCH"       // TODO: users.role 바인딩
         b.tvVersion.text = getString(R.string.app_version_fmt, BuildConfig.VERSION_NAME)
 
         b.btnLogout.setOnClickListener {

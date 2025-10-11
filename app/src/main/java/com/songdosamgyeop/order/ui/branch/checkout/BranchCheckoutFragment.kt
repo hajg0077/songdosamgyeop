@@ -5,6 +5,7 @@ import android.view.View
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.datepicker.MaterialDatePicker
@@ -13,6 +14,7 @@ import com.google.firebase.Timestamp
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.databinding.FragmentBranchCheckoutBinding
 import com.songdosamgyeop.order.ui.branch.shop.BranchShopViewModel
+import com.songdosamgyeop.order.user.UserSessionViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import java.text.NumberFormat
 import java.text.ParseException
@@ -25,6 +27,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
 
+    private val userProfile: UserSessionViewModel by viewModels()
     private val vm: BranchShopViewModel by activityViewModels()
     private lateinit var b: FragmentBranchCheckoutBinding
     private lateinit var adapter: BranchCheckoutAdapter
@@ -119,7 +122,6 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
             vm.placeAll(branchId, branchName, note = note, requestedAt = selectedDate)
         }
 
-        // 주문 결과 이벤트 처리 → 성공 시 PortOne 결제화면 진입
         viewLifecycleOwner.lifecycleScope.launch {
             vm.placeEvents.collectLatest { ev ->
                 when (ev) {
@@ -132,10 +134,11 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
                         val dateStr = b.etDate.text?.toString()?.takeIf { it.isNotBlank() }
                         val title = buildTitleForPayment(dateStr)
 
-                        // 구매자 정보 (실서비스에선 사용자 프로필에서 가져와 세팅)
-                        val buyerName: String? = null // TODO
-                        val buyerEmail: String? = null // TODO
-                        val buyerTel: String = ""   // TODO
+                        // 구매자 정보
+                        val profile = userProfile.profile.value
+                        val branchName = profile?.branchName?.ifBlank { null }
+                        val buyerEmail = profile?.email?.ifBlank { null }
+                        val buyerTel = profile?.branchTel?.ifBlank { null }
 
                         // 결제 화면으로 이동
                         CheckoutNavigator.goPayment(
@@ -143,7 +146,7 @@ class BranchCheckoutFragment : Fragment(R.layout.fragment_branch_checkout) {
                             orderId = orderId,
                             title = title,
                             amount = amount,
-                            buyerName = buyerName,
+                            branchName = branchName,
                             buyerEmail = buyerEmail,
                             buyerTel = buyerTel
                         )

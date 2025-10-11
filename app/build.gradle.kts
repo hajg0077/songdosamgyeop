@@ -91,6 +91,7 @@ dependencies {
     // Hilt
     implementation(libs.hilt.android)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.google.material)
     kapt(libs.hilt.compiler)
 
     // Timber
