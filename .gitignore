@@ -13,3 +13,19 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# --- Secrets / Keys ---
+/tools/
+/functions/
+/tools/serviceAccountKey.json
+/tools/*serviceAccount*.json
+/tools/*firebase-adminsdk*.json
+**/*firebase-adminsdk*.json
+**/*serviceAccount*.json
+**/*.p12
+**/*.pem
+**/*.key
+
+# --- Env files ---
+**/.env
+**/.env.*
