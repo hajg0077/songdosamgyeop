@@ -13,6 +13,7 @@ const auth = admin.auth();
 // ──────────────────────────────────────────────────────────────
 const region = "asia-northeast3";
 const HQ_TOPIC = process.env.HQ_TOPIC || "hq";
+const BOOTSTRAP_SECRET = (functions.config().bootstrap?.secret || "") as string;
 const BRANCH_TOPIC = (branchId: string) => `branch-${branchId}`;
 
 // ──────────────────────────────────────────────────────────────
@@ -34,6 +35,50 @@ async function loadRegistration(docId: string) {
   if (!snap.exists) throw new functions.https.HttpsError("not-found", "registration not found");
   return { ref, data: snap.data()! };
 }
+
+// ──────────────────────────────────────────────────────────────
+// 0) 최초 HQ 부트스트랩 (1회용 권장)
+// ──────────────────────────────────────────────────────────────
+export const bootstrapHqAdmin = functions.region(region).https.onCall(async (data, context) => {
+  const secret = String(data?.secret || "");
+  const uid = String(data?.uid || "");
+
+  if (!secret || !uid) {
+    throw new functions.https.HttpsError("invalid-argument", "secret, uid required");
+  }
+  if (!BOOTSTRAP_SECRET || secret !== BOOTSTRAP_SECRET) {
+    throw new functions.https.HttpsError("permission-denied", "bad secret");
+  }
+
+  // ✅ 이미 HQ가 있으면 더 이상 부트스트랩 금지
+  const existing = await db.collection("users").where("role", "==", "HQ").limit(1).get();
+  if (!existing.empty) {
+    throw new functions.https.HttpsError("failed-precondition", "HQ already exists");
+  }
+
+  // 유저 존재 확인
+  const user = await auth.getUser(uid).catch(() => null);
+  if (!user) {
+    throw new functions.https.HttpsError("not-found", "user not found");
+  }
+
+  // 1) Custom Claims 부여
+  await auth.setCustomUserClaims(uid, { role: "HQ", admin: true });
+
+  // 2) users/{uid} 캐시 문서 기록
+  await db.collection("users").doc(uid).set(
+    {
+      role: "HQ",
+      isAdmin: true,
+      email: user.email || null,
+      name: user.displayName || null,
+      bootstrappedAt: admin.firestore.FieldValue.serverTimestamp()
+    },
+    { merge: true }
+  );
+
+  return { ok: true, uid };
+});
 
 // ──────────────────────────────────────────────────────────────
 // ① HQ: 가입 승인/반려/리셋
@@ -74,6 +119,7 @@ export const hqApproveRegistration = functions.region(region).https.onCall(async
   };
 
   // branchId 결정
+  const branchCode = String(data.branchCode ?? "").trim();
   const branchId = branchCode || `BR_${ref.id}`;
 
   // 사용자 생성/갱신
@@ -388,7 +434,7 @@ export const onRegistrationCreated = functions
       uid,
       email,
       branchTel: tel,
-      eventId: `reg-created:${uid}:${snap.createTime.toMillis?.() ?? Date.now()}`
+      eventId: `reg-created:${uid}:${snap.createTime.toMillis()}`
     });
 
     // 장치 락(멱등)

@@ -16,7 +16,6 @@ import com.songdosamgyeop.order.ui.hq.HqActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import com.songdosamgyeop.order.core.model.RegistrationAddress
 
 @AndroidEntryPoint
 class LoginFragment : Fragment(R.layout.fragment_login) {
@@ -90,7 +89,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     private fun toPending() {
         startActivity(
-            Intent(requireContext(), PendingApprovalActivity::class.java)
+            Intent(requireContext(), PendingActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         )
         requireActivity().finish()

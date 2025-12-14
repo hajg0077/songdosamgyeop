@@ -22,6 +22,7 @@ class SplashViewModel @Inject constructor(
         data object ToLogin : Destination()
         data object ToBranchHome : Destination()
         data object ToHqHome : Destination()
+        data object ToBranchWaiting : Destination()
     }
 
     private val _route = MutableLiveData<Destination>()

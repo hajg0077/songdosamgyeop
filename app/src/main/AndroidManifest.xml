@@ -58,7 +58,6 @@
                     android:path="/return" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.login.PendingApprovalActivity" />
         <!-- 기본 아이콘/색 지정 (푸시 알림 기본값) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"

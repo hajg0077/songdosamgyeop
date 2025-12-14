@@ -109,5 +109,7 @@
         android:label="주문 상세">
         <argument android:name="orderId" app:argType="string" />
     </fragment>
-
+    <action
+        android:id="@+id/action_splash_to_branchWaiting"
+        app:destination="@id/branchWaitingFragment" />
 </navigation>

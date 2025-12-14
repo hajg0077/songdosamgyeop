@@ -1,5 +1,6 @@
 package com.songdosamgyeop.order.ui.login
 
+import com.songdosamgyeop.order.R
 import android.app.Dialog
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,7 +10,6 @@ import android.widget.Toast
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.textfield.TextInputEditText
-import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.core.model.RegistrationAddress
 
 class SignupWizardBottomSheet(
@@ -23,6 +23,22 @@ class SignupWizardBottomSheet(
         val v = LayoutInflater.from(requireContext())
             .inflate(R.layout.bottomsheet_signup_wizard, null, false)
         dialog.setContentView(v)
+
+        dialog.setOnShowListener {
+            val bottomSheet =
+                dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+                    ?: return@setOnShowListener
+
+            val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheet)
+
+            // 전체 높이로 확장
+            behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+            behavior.skipCollapsed = true
+            behavior.isDraggable = true
+
+            // peekHeight를 화면 높이로 강제(원하면 비율로 조절 가능)
+            behavior.peekHeight = resources.displayMetrics.heightPixels
+        }
 
         val tvStepTitle = v.findViewById<TextView>(R.id.tvStepTitle)
         val stepPhone = v.findViewById<View>(R.id.stepPhone)
