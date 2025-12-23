@@ -11,6 +11,7 @@ import androidx.core.os.bundleOf
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -27,6 +28,11 @@ import com.songdosamgyeop.order.ui.common.showInfo
 import android.content.DialogInterface
 import com.songdosamgyeop.order.data.repo.Registration as RepoRegistration  // ✅ alias 로 통일
 import android.graphics.drawable.ColorDrawable
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
+import androidx.navigation.NavController
+import androidx.recyclerview.widget.LinearLayoutManager
 
 @AndroidEntryPoint
 class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_list) {
@@ -56,8 +62,11 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                 "phone" to reg.phone,
                 "memo" to reg.memo
             )
-            findNavController().navigate(actionId, args)
+            requireActivity()
+                .findNavController(R.id.hq_nav_host)
+                .navigate(R.id.hqRegistrationDetailFragment, args)
         }
+        b.recycler.layoutManager = LinearLayoutManager(requireContext())
         b.recycler.adapter = adapter
 
         // 🔧 여기서 repo 타입으로 맞춤
@@ -160,15 +169,18 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
             SpacingItemDecoration(resources.getDimensionPixelSize(R.dimen.list_item_space))
         )
 
-        val fromHome = findNavController().previousBackStackEntry?.savedStateHandle
+        val nav: NavController = requireActivity().findNavController(R.id.hq_nav_host)
+
+        val fromHome = nav.previousBackStackEntry?.savedStateHandle
         fromHome?.getLiveData<Bundle>(KEY_INIT_FILTER)
-            ?.observe(viewLifecycleOwner) { payload: Bundle ->
+            ?.observe(viewLifecycleOwner) { payload ->
                 if (payload.getString("screen") == "registrations") {
                     payload.getString("status")?.let { statusStr ->
                         vm.setStatus(RegistrationStatus.valueOf(statusStr))
                     }
                 }
-                fromHome.remove<Bundle>(KEY_INIT_FILTER)
+                // ✅ remove가 없을 수 있으니 null로 지워버리기
+                fromHome.set(KEY_INIT_FILTER, null)
             }
     }
 

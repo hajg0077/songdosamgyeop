@@ -1,31 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- HQ 전용 네비게이션 그래프: 각 탭의 루트 프래그먼트를 연결 -->
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_hq"
-    app:startDestination="@id/nav_hq_home">
+    app:startDestination="@id/menu_hq_home">
 
-    <!-- 1) 본사 홈 -->
     <fragment
-        android:id="@+id/nav_hq_home"
+        android:id="@+id/menu_hq_home"
         android:name="com.songdosamgyeop.order.ui.hq.home.HqHomeFragment"
         android:label="홈" />
 
-    <!-- 2) 신청서 목록 (이미 구현된 화면) -->
+    <!-- HQ: 신청서 목록 -->
     <fragment
-        android:id="@+id/nav_registrations"
+        android:id="@+id/menu_registrations"
         android:name="com.songdosamgyeop.order.ui.hq.registrationlist.HqRegistrationListFragment"
-        android:label="신청서" />
+        android:label="신청서">
+        <action
+            android:id="@+id/action_hqRegistrationListFragment_to_hqRegistrationDetailFragment"
+            app:destination="@id/hqRegistrationDetailFragment" />
+    </fragment>
 
-    <!-- 3) 주문 확인(모니터링) 루트: HQ 주문 목록 화면을 루트로 사용 -->
+    <!-- HQ: 신청서 상세 -->
     <fragment
-        android:id="@+id/nav_monitoring"
+        android:id="@+id/hqRegistrationDetailFragment"
+        android:name="com.songdosamgyeop.order.ui.hq.registrationdetail.HqRegistrationDetailFragment"
+        android:label="신청서 상세">
+        <argument
+            android:name="id"
+            app:argType="string" />
+        <!-- 너가 bundle로 넘기던 값들 전부 arg로 만들고 싶으면 여기에 추가 가능 -->
+    </fragment>
+
+    <!-- HQ: 주문 모니터링 -->
+    <fragment
+        android:id="@+id/menu_monitoring"
         android:name="com.songdosamgyeop.order.ui.hq.orders.HqOrdersFragment"
-        android:label="주문 확인" />
+        android:label="주문 확인">
+        <action
+            android:id="@+id/action_hqOrders_to_hqOrderDetail"
+            app:destination="@id/hqOrderDetailFragment" />
+    </fragment>
 
-    <!-- 4) 설정 -->
+    <!-- HQ: 주문 상세 -->
     <fragment
-        android:id="@+id/nav_settings"
+        android:id="@+id/hqOrderDetailFragment"
+        android:name="com.songdosamgyeop.order.ui.hq.orders.detail.HqOrderDetailFragment"
+        android:label="주문 상세">
+        <argument
+            android:name="orderId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/menu_settings"
         android:name="com.songdosamgyeop.order.ui.hq.settings.HqSettingsFragment"
         android:label="설정" />
 </navigation>

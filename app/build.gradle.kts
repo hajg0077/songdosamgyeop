@@ -30,9 +30,9 @@ android {
         debug {
             // ✅ CSV 내보내기 사용 (툴바 '내보내기' 기능 ON)
             buildConfigField("boolean", "FEATURE_EXPORT", "true")
-            buildConfigField("boolean", "FUNCTIONS_ENABLED", "false")  // 스텁 또는 에뮬레이터
-            buildConfigField("boolean", "EMULATOR", "true")
-            buildConfigField("String",  "EMULATOR_HOST", "\"192.168.0.12\"") // PC IP
+            buildConfigField("boolean", "FUNCTIONS_ENABLED", "true")  // 스텁 또는 에뮬레이터
+            buildConfigField("boolean", "EMULATOR", "false")
+            buildConfigField("String",  "EMULATOR_HOST", "\"\"")
         }
         release {
             isMinifyEnabled = false
@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.google.material)
+    implementation(libs.androidx.navigation.runtime.ktx)
     kapt(libs.hilt.compiler)
 
     // Timber

@@ -8,7 +8,7 @@ object Env {
     const val APP_SCHEME = "songdo-pay"         // 딥링크 스킴 (아래 Manifest 매칭)
 
     // 결제/검증 플래그
-    const val FUNCTIONS_ENABLED: Boolean = false // 배포 전: false, 배포 후: true
+    const val FUNCTIONS_ENABLED: Boolean = true // 배포 전: false, 배포 후: true
     // Cloud Functions
     const val FUNCTIONS_REGION: String = "asia-northeast3"
 

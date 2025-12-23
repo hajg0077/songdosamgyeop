@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/branchProductsFragment"
+        android:id="@+id/menu_branch_Products"
         android:title="@string/tab_products"
         android:icon="@drawable/ic_products_24" />
     <item
-        android:id="@+id/branchCartFragment"
+        android:id="@+id/menu_branch_Cart"
         android:title="@string/tab_cart"
         android:icon="@drawable/ic_cart_24" />
     <item
-        android:id="@+id/branchOrderHistoryFragment"
+        android:id="@+id/menu_branch_OrderHistory"
         android:title="@string/tab_history"
         android:icon="@drawable/ic_history_24" />
     <item
-        android:id="@+id/branchSettingsFragment"
+        android:id="@+id/menu_branch_Settings"
         android:title="@string/tab_settings"
         android:icon="@drawable/ic_settings_24" />
 </menu>

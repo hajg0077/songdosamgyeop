@@ -1,28 +1,52 @@
 package com.songdosamgyeop.order.ui.hq
 
 import android.os.Bundle
+import androidx.navigation.fragment.NavHostFragment
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.firebase.auth.FirebaseAuth
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.notify.TokenUploader
 import com.songdosamgyeop.order.notify.TopicSubscriber
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 
 @AndroidEntryPoint
 class HqActivity : AppCompatActivity(R.layout.activity_hq) {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val navController = findNavController(R.id.hq_nav_host)
+
+        // ✅ HQ는 시스템이 자동으로 바/제스처 영역 피하게(가장 안전)
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+
+        val navHost = supportFragmentManager.findFragmentById(R.id.hq_nav_host) as NavHostFragment
+        val navController = navHost.navController
+
         val bottom = findViewById<BottomNavigationView>(R.id.bottomNav)
-
-        // 하단 네비와 NavController 연결
         bottom.setupWithNavController(navController)
+        bottom.setOnItemReselectedListener { /* no-op */ }
 
-        // (선택) 탭 재선택 시 현재 리스트 상단으로 스크롤 같은 UX를 원하면 여기에 구현
-        bottom.setOnItemReselectedListener { /* no-op for now */ }
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            bottom.isVisible = destination.id in setOf(
+                R.id.menu_hq_home,
+                R.id.menu_registrations,
+                R.id.menu_monitoring,
+                R.id.menu_settings
+            )
+        }
+
+        lifecycleScope.launch {
+            val user = FirebaseAuth.getInstance().currentUser ?: return@launch
+            val tokenResult = runCatching { user.getIdToken(true).await() }.getOrNull()
+            android.util.Log.d("AUTH", "HQ token role=${tokenResult?.claims?.get("role")} claims=${tokenResult?.claims}")
+        }
 
         TokenUploader.refreshAndUpload()
         TopicSubscriber.subscribeHq()

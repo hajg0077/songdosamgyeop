@@ -2,19 +2,19 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/nav_branch"
-    app:startDestination="@id/branchProductsFragment">
+    app:startDestination="@id/menu_branch_Products">
 
     <fragment
-        android:id="@+id/branchProductsFragment"
+        android:id="@+id/menu_branch_Products"
         android:name="com.songdosamgyeop.order.ui.branch.products.BranchProductsFragment"
         android:label="@string/tab_products">
         <action
             android:id="@+id/action_branchProducts_to_branchCart"
-            app:destination="@id/branchCartFragment" />
+            app:destination="@id/menu_branch_Cart" />
     </fragment>
 
     <fragment
-        android:id="@+id/branchCartFragment"
+        android:id="@+id/menu_branch_Cart"
         android:name="com.songdosamgyeop.order.ui.branch.cart.BranchCartFragment"
         android:label="@string/tab_cart">
         <action
@@ -22,13 +22,14 @@
             app:destination="@id/branchCheckoutFragment" />
     </fragment>
 
+    <!-- 탭 외 화면은 그대로 유지해도 OK -->
     <fragment
         android:id="@+id/branchCheckoutFragment"
         android:name="com.songdosamgyeop.order.ui.branch.checkout.BranchCheckoutFragment"
         android:label="@string/checkout_title" />
 
     <fragment
-        android:id="@+id/branchOrderHistoryFragment"
+        android:id="@+id/menu_branch_OrderHistory"
         android:name="com.songdosamgyeop.order.ui.branch.history.BranchOrderHistoryFragment"
         android:label="@string/branch_history_title">
         <action
@@ -45,9 +46,8 @@
             app:argType="string" />
     </fragment>
 
-
     <fragment
-        android:id="@+id/branchSettingsFragment"
+        android:id="@+id/menu_branch_Settings"
         android:name="com.songdosamgyeop.order.ui.branch.settings.BranchSettingsFragment"
         android:label="@string/tab_settings" />
 </navigation>

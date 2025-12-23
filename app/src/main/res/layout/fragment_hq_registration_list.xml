@@ -5,7 +5,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:paddingTop="40dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp">
 
     <!-- 검색창 (지금은 VM에서 안 쓰지만 곧 검색/필터 고도화 때 활용) -->
     <com.google.android.material.textfield.TextInputLayout
@@ -42,23 +44,29 @@
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipPending"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             style="@style/Widget.Material3.Chip.Assist"
-            android:text="PENDING"
+            android:text="대기"
             app:checkedIconVisible="false"
             app:chipIconVisible="false"
             android:checked="true"/>
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipApproved"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             style="@style/Widget.Material3.Chip.Assist"
-            android:text="APPROVED"
+            android:text="승인"
             app:checkedIconVisible="false"
             app:chipIconVisible="false"/>
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipRejected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             style="@style/Widget.Material3.Chip.Assist"
-            android:text="REJECTED"
+            android:text="거절"
             app:checkedIconVisible="false"
             app:chipIconVisible="false"/>
     </com.google.android.material.chip.ChipGroup>

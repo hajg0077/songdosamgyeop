@@ -2,6 +2,9 @@ package com.songdosamgyeop.order.ui.hq.registrationdetail
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -20,7 +23,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
- * HQ 신청서 상세 화면 (MVVM 준수: 데이터는 VM, Fragment는 표시/입력만).
+ * HQ 신청서 상세 화면
  */
 @AndroidEntryPoint
 class HqRegistrationDetailFragment
@@ -31,7 +34,20 @@ class HqRegistrationDetailFragment
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentHqRegistrationDetailBinding.bind(view)
+        android.util.Log.d("DETAIL", "activity=${requireActivity()::class.java.simpleName}")
 
+        val nav = findNavController()
+        android.util.Log.d(
+            "DETAIL",
+            "dest=${nav.currentDestination?.id} label=${nav.currentDestination?.label}"
+        )
+        val groupButtons = view.findViewById<View>(R.id.groupButtons)
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+            val sys = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            groupButtons.updatePadding(bottom = sys.bottom + groupButtons.paddingBottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(view)
         // Toolbar back
         b.toolbar.setNavigationOnClickListener { findNavController().navigateUp() }
 
@@ -52,14 +68,18 @@ class HqRegistrationDetailFragment
                             b.tvName.text = d.name
                             b.tvEmail.text = d.email
                             b.tvPhone.text = d.phone ?: "-"
-                            b.tvMemo.text = d.memo ?: "-"
+                            findNavController().popBackStack()
                         }
                         HqRegistrationDetailViewModel.UiState.NotFound -> {
-                            Snackbar.make(b.root, "신청서를 찾을 수 없습니다.", Snackbar.LENGTH_LONG).show()
+                            Snackbar.make(b.root, "신청서를 찾을 수 없습니다.", Snackbar.LENGTH_LONG)
+                                .setAnchorView(b.groupButtons)   // ✅ 스낵바가 버튼 위에 뜨고 버튼은 안 밀림
+                                .show()
                             findNavController().popBackStack()
                         }
                         is HqRegistrationDetailViewModel.UiState.Error -> {
-                            Snackbar.make(b.root, state.message, Snackbar.LENGTH_LONG).show()
+                            Snackbar.make(b.scroll, state.message, Snackbar.LENGTH_LONG)
+                                .setAnchorView(b.groupButtons)   // ✅ 스낵바가 버튼 위에 뜨고 버튼은 안 밀림
+                                .show()
                         }
                     }
                 }
@@ -85,6 +105,7 @@ class HqRegistrationDetailFragment
 
         // 처리 결과
         actionsVm.message.observe(viewLifecycleOwner) { res ->
+            setButtonsEnabled(b, true)
             res.onSuccess { b.root.showInfo(it) }
                 .onFailure { b.root.showError(it) }
             requireActivity().invalidateOptionsMenu()

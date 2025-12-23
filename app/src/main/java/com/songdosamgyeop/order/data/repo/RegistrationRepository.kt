@@ -37,26 +37,42 @@ class RegistrationRepository @Inject constructor(
         status: RegistrationStatus,
         queryText: String?
     ): Flow<List<Pair<String, Registration>>> = callbackFlow {
-        var q: Query = db.collection("registrations")
-            .whereEqualTo("status", status.name)
 
-        q = if (!queryText.isNullOrBlank()) {
-            // ✅ 지사명 접두 검색만
+        val trimmed = queryText?.trim()
+        val hasQuery = !trimmed.isNullOrBlank()
+        val lower = trimmed?.lowercase()
+
+        // ✅ 인덱스 회피: whereEqualTo(status) 제거
+        // - 검색: branchName_lower prefix (orderBy 1개)
+        // - 기본: createdAt desc (orderBy 1개)
+        var q: Query = db.collection("registrations")
+
+        q = if (hasQuery) {
             q.orderBy("branchName_lower")
-                .startAt(queryText.lowercase())
-                .endAt(queryText.lowercase() + "\uf8ff")
+                .startAt(lower!!)
+                .endAt(lower + "\uf8ff")
+                .limit(300) // 검색 결과 폭주 방지
         } else {
             q.orderBy("createdAt", Query.Direction.DESCENDING)
+                .limit(300) // 최신 목록 폭주 방지
         }
 
-        Log.d("RegRepo", "subscribeList status=$status, query=$queryText")
+        Log.d("RegRepo", "subscribeList(no-index) status=$status, query=$queryText, hasQuery=$hasQuery")
+
         val reg: ListenerRegistration = q.addSnapshotListener { snap, e ->
             if (e != null) {
                 Log.e("RegRepo", "listen error", e)
-                trySend(emptyList()); return@addSnapshotListener
+                trySend(emptyList())
+                return@addSnapshotListener
             }
-            val list = snap?.documents?.map { d ->
-                val data = d.data ?: emptyMap<String, Any>()
+
+            val list = snap?.documents?.mapNotNull { d ->
+                val data = d.data ?: return@mapNotNull null
+
+                // ✅ 클라이언트에서 status 필터링 (인덱스 없이도 상태 탭 유지)
+                val s = data["status"] as? String ?: return@mapNotNull null
+                if (s != status.name) return@mapNotNull null
+
                 val item = Registration(
                     id = d.id,
                     email = data["email"] as? String ?: "",
@@ -68,8 +84,10 @@ class RegistrationRepository @Inject constructor(
                 )
                 d.id to item
             } ?: emptyList()
+
             trySend(list)
         }
+
         awaitClose { reg.remove() }
     }
 

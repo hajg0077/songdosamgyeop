@@ -80,15 +80,15 @@ class HqHomeFragment : Fragment(R.layout.fragment_hq_home) {
                 "KEY_INIT_FILTER",
                 bundleOf("screen" to "orders", "status" to "PENDING")
             )
-            findNavController().navigate(R.id.nav_monitoring)
+            findNavController().navigate(R.id.menu_monitoring)
         }
 
         b.cardActiveOrders.setOnClickListener {
-            // 모니터링을 APPROVED(출고 대기)로 열기 예시
+            // 모니터링을 APPROVED (출고 대기)로 열기 예시
             sendInitFilterAndNavigate(
                 screen = "orders",
                 status = "APPROVED",
-                destId = R.id.nav_monitoring
+                destId = R.id.menu_monitoring
             )
         }
 
@@ -97,7 +97,7 @@ class HqHomeFragment : Fragment(R.layout.fragment_hq_home) {
             sendInitFilterAndNavigate(
                 screen = "registrations",
                 status = "PENDING",
-                destId = R.id.nav_registrations
+                destId = R.id.menu_registrations
             )
         }
 

@@ -5,21 +5,24 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/splashFragment">
 
-    <!-- Splash (단일 정의) -->
+    <!-- Splash -->
     <fragment
         android:id="@+id/splashFragment"
         android:name="com.songdosamgyeop.order.ui.splash.SplashFragment"
         android:label="스플래시"
         tools:layout="@layout/fragment_splash">
+
         <action
             android:id="@+id/action_splash_to_login"
-            app:destination="@id/loginFragment" />
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
+
         <action
             android:id="@+id/action_splash_to_branchHome"
-            app:destination="@id/branchHomeFragment" />
-        <action
-            android:id="@+id/action_splash_to_hqHome"
-            app:destination="@id/hqHomeFragment" />
+            app:destination="@id/branchHomeFragment"
+            app:popUpTo="@id/splashFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <!-- Login -->
@@ -27,12 +30,11 @@
         android:id="@+id/loginFragment"
         android:name="com.songdosamgyeop.order.ui.login.LoginFragment"
         android:label="로그인">
-        <!-- 로그인 성공 후 스플래시로 되돌아가 라우팅 재실행 -->
         <action
             android:id="@+id/action_login_to_splash"
             app:destination="@id/splashFragment"
             app:popUpTo="@id/splashFragment"
-            app:popUpToInclusive="true"/>
+            app:popUpToInclusive="true" />
     </fragment>
 
     <!-- Branch Home -->
@@ -40,76 +42,4 @@
         android:id="@+id/branchHomeFragment"
         android:name="com.songdosamgyeop.order.ui.branch.home.BranchHomeFragment"
         android:label="지사 홈" />
-
-    <!-- HQ Home -->
-    <fragment
-        android:id="@+id/hqHomeFragment"
-        android:name="com.songdosamgyeop.order.ui.hq.home.HqHomeFragment"
-        android:label="본사 홈" />
-
-    <!-- 브랜치: 회원가입 신청 -->
-    <fragment
-        android:id="@+id/branchRegistrationFragment"
-        android:name="com.songdosamgyeop.order.ui.branch.registration.BranchRegistrationFragment"
-        android:label="지사 회원가입 신청">
-        <action
-            android:id="@+id/action_branchRegistration_to_branchWaiting"
-            app:destination="@id/branchWaitingFragment" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/branchWaitingFragment"
-        android:name="com.songdosamgyeop.order.ui.branch.waiting.BranchWaitingFragment"
-        android:label="승인 대기" />
-
-    <!-- HQ: 신청서 목록 -->
-    <fragment
-        android:id="@+id/hqRegistrationListFragment"
-        android:name="com.songdosamgyeop.order.ui.hq.registrationlist.HqRegistrationListFragment"
-        android:label="신청서 목록">
-        <action
-            android:id="@+id/action_hqRegistrationListFragment_to_hqRegistrationDetailFragment"
-            app:destination="@id/hqRegistrationDetailFragment" />
-    </fragment>
-
-    <!-- HQ: 신청서 상세 -->
-    <fragment
-        android:id="@+id/hqRegistrationDetailFragment"
-        android:name="com.songdosamgyeop.order.ui.hq.registrationdetail.HqRegistrationDetailFragment"
-        android:label="신청서 상세">
-        <argument android:name="id" app:argType="string" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/branchproductsFragment"
-        android:name="com.songdosamgyeop.order.ui.branch.products.BranchProductsFragment"
-        android:label="상품 목록">
-        <action
-            android:id="@+id/action_products_to_cart"
-            app:destination="@id/branchcartFragment"/>
-    </fragment>
-
-    <fragment
-        android:id="@+id/branchcartFragment"
-        android:name="com.songdosamgyeop.order.ui.branch.cart.BranchcartFragment"
-        android:label="장바구니"/>
-
-    <fragment
-        android:id="@+id/hqOrdersFragment"
-        android:name="com.songdosamgyeop.order.ui.hq.orders.HqOrdersFragment"
-        android:label="주문 모니터링">
-        <action
-            android:id="@+id/action_hqOrders_to_hqOrderDetail"
-            app:destination="@id/hqOrderDetailFragment" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/hqOrderDetailFragment"
-        android:name="com.songdosamgyeop.order.ui.hq.orders.detail.HqOrderDetailFragment"
-        android:label="주문 상세">
-        <argument android:name="orderId" app:argType="string" />
-    </fragment>
-    <action
-        android:id="@+id/action_splash_to_branchWaiting"
-        app:destination="@id/branchWaitingFragment" />
 </navigation>

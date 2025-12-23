@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:id="@+id/branchHomeFragment" android:title="홈" app:showAsAction="ifRoom"/>
-    <item android:id="@+id/productsFragment"   android:title="상품" app:showAsAction="ifRoom"/>
-    <item android:id="@+id/cartFragment"       android:title="장바구니" app:showAsAction="ifRoom"/>
-    <item android:id="@+id/branchOrdersFragment" android:title="주문" app:showAsAction="ifRoom"/>
-</menu>

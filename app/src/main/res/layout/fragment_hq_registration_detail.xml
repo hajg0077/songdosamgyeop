@@ -6,191 +6,184 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 상단 앱바 -->
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
-        style="@style/Widget.Material3.Toolbar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:navigationIcon="@drawable/ic_arrow_back_24"
-        android:title="신청서 상세"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
-
-    <!-- 스크롤 가능한 본문 -->
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/scroll"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/toolbar"
-        app:layout_constraintBottom_toTopOf="@id/groupButtons"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <LinearLayout
-            android:layout_width="match_parent"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <!-- 상단 앱바 -->
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            style="@style/Widget.Material3.Toolbar"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:navigationIcon="@drawable/ic_arrow_back_24"
+            android:title="신청서 상세"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
-            <!-- 지사 정보 카드 -->
-            <com.google.android.material.card.MaterialCardView
+        <!-- 스크롤 가능한 본문 -->
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scroll"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:fillViewport="true"
+            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            app:layout_constraintBottom_toTopOf="@id/groupButtons"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.Material3.CardView.Elevated"
+                android:orientation="vertical"
                 android:padding="16dp">
 
-                <LinearLayout
+                <!-- 지사 정보 카드 -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    style="@style/Widget.Material3.CardView.Elevated"
+                    android:padding="16dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="지사명"
-                        android:textAppearance="?attr/textAppearanceLabelLarge"/>
-                    <TextView
-                        android:id="@+id/tvBranchName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textStyle="bold"
-                        android:textAppearance="?attr/textAppearanceBodyLarge"
-                        tools:text="송도삼겹 인천송도점"/>
-
-                    <View
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="8dp"/>
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="10dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="지사명"
+                            android:textAppearance="?attr/textAppearanceLabelLarge"/>
+                        <TextView
+                            android:id="@+id/tvBranchName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textStyle="bold"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            tools:text="송도삼겹 인천송도점"/>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="8dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="지사 코드"
+                            android:textAppearance="?attr/textAppearanceLabelLarge"/>
+                        <TextView
+                            android:id="@+id/tvBranchCode"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            tools:text="BR-00123"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="12dp"/>
+
+                <!-- 신청자 정보 카드 -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cv_applicant_information"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.Material3.CardView.Elevated"
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="지사 코드"
-                        android:textAppearance="?attr/textAppearanceLabelLarge"/>
-                    <TextView
-                        android:id="@+id/tvBranchCode"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceBodyLarge"
-                        tools:text="BR-00123"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                        android:orientation="vertical"
+                        android:padding="10dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="신청자 이름"
+                            android:textAppearance="?attr/textAppearanceLabelLarge"/>
+                        <TextView
+                            android:id="@+id/tvName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textStyle="bold"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            tools:text="홍길동"/>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="8dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="이메일"
+                            android:textAppearance="?attr/textAppearanceLabelLarge"/>
+                        <TextView
+                            android:id="@+id/tvEmail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            tools:text="branch@example.com"/>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="8dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="연락처"
+                            android:textAppearance="?attr/textAppearanceLabelLarge"/>
+                        <TextView
+                            android:id="@+id/tvPhone"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textAppearance="?attr/textAppearanceBodyLarge"
+                            tools:text="010-1234-5678"/>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="8dp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <!-- 하단 버튼 영역 -->
+        <LinearLayout
+            android:id="@+id/groupButtons"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReject"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="반려"/>
 
             <View
-                android:layout_width="match_parent"
-                android:layout_height="12dp"/>
+                android:layout_width="12dp"
+                android:layout_height="0dp"/>
 
-            <!-- 신청자 정보 카드 -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnApprove"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                style="@style/Widget.Material3.CardView.Elevated"
-                android:padding="16dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="신청자 이름"
-                        android:textAppearance="?attr/textAppearanceLabelLarge"/>
-                    <TextView
-                        android:id="@+id/tvName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textStyle="bold"
-                        android:textAppearance="?attr/textAppearanceBodyLarge"
-                        tools:text="홍길동"/>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="8dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="이메일"
-                        android:textAppearance="?attr/textAppearanceLabelLarge"/>
-                    <TextView
-                        android:id="@+id/tvEmail"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceBodyLarge"
-                        tools:text="branch@example.com"/>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="8dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="연락처"
-                        android:textAppearance="?attr/textAppearanceLabelLarge"/>
-                    <TextView
-                        android:id="@+id/tvPhone"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textAppearance="?attr/textAppearanceBodyLarge"
-                        tools:text="010-1234-5678"/>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="8dp"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="메모"
-                        android:textAppearance="?attr/textAppearanceLabelLarge"/>
-                    <TextView
-                        android:id="@+id/tvMemo"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:lineSpacingExtra="2dp"
-                        android:textAppearance="?attr/textAppearanceBodyMedium"
-                        tools:text="오픈 예정일 10월 예정, 발주 빈도 월 2회 예상"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
+                android:text="승인"/>
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-
-    <!-- 하단 버튼 영역 -->
-    <LinearLayout
-        android:id="@+id/groupButtons"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnReject"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="반려"/>
-
-        <View
-            android:layout_width="12dp"
-            android:layout_height="0dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnApprove"
-            style="@style/Widget.Material3.Button.TonalButton"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="승인"/>
-    </LinearLayout>
-
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

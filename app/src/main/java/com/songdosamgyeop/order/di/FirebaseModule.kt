@@ -21,11 +21,11 @@ object FirebaseModule {
     fun provideFirestore(): FirebaseFirestore =
         FirebaseFirestore.getInstance().apply {
             if (BuildConfig.EMULATOR) {
-                useEmulator(BuildConfig.EMULATOR_HOST, /* port = */ 8080)
+                useEmulator(BuildConfig.EMULATOR_HOST, 8080)
+                firestoreSettings = FirebaseFirestoreSettings.Builder()
+                    .setPersistenceEnabled(false) // 🔥 중요
+                    .build()
             }
-            firestoreSettings = FirebaseFirestoreSettings.Builder()
-                .setPersistenceEnabled(true)
-                .build()
         }
 
     @Provides @Singleton

@@ -37,6 +37,7 @@ swiperefreshlayout = "1.1.0"
 # Iamport(PortOne) - JitPack 태그는 v 접두사 필요
 iamport = "v1.3.6"
 materialVersion = "1.13.0"
+navigationRuntimeKtx = "2.9.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -87,6 +88,7 @@ desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", ver
 # ✅ 추가: PortOne SDK (Iamport via JitPack)
 iamport-android = { group = "com.github.iamport", name = "iamport-android", version.ref = "iamport" }
 google-material = { group = "com.google.android.material", name = "material", version.ref = "materialVersion" }
+androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

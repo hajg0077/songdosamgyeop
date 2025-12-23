@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:id="@+id/hqHomeFragment"              android:title="홈" app:showAsAction="ifRoom"/>
-    <item android:id="@+id/hqRegistrationListFragment"  android:title="신청서" app:showAsAction="ifRoom"/>
-    <item android:id="@+id/hqOrdersFragment"            android:title="주문" app:showAsAction="ifRoom"/>
-    <item android:id="@+id/hqSettingsFragment"          android:title="설정" app:showAsAction="ifRoom"/>
-</menu>

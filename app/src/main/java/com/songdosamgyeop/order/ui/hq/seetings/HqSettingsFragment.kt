@@ -34,32 +34,6 @@ class HqSettingsFragment : Fragment(R.layout.fragment_hq_settings) {
         val buildType = if (BuildConfig.DEBUG) "debug" else "release"
         b.tvVersion.text = "버전 ${BuildConfig.VERSION_NAME} ($buildType)"
 
-        // 피드백 메일: 기기/앱 정보 자동 포함
-        b.btnFeedback.setOnClickListener {
-            val body = buildString {
-                appendLine("[Feedback]")
-                appendLine()
-                appendLine("---")
-                appendLine("App: ${BuildConfig.APPLICATION_ID} ${BuildConfig.VERSION_NAME} ($buildType)")
-                appendLine("Device: ${Build.MANUFACTURER} ${Build.MODEL}")
-                appendLine("OS: Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
-            }
-            val intent = Intent(Intent.ACTION_SENDTO).apply {
-                data = Uri.parse("mailto:")
-                putExtra(Intent.EXTRA_EMAIL, arrayOf("support@songdosamgyeop.com"))
-                putExtra(Intent.EXTRA_SUBJECT, "[송도삼겹 HQ] 앱 피드백")
-                putExtra(Intent.EXTRA_TEXT, body)
-            }
-            if (intent.resolveActivity(requireContext().packageManager) != null) {
-                startActivity(intent)
-            } else {
-                MaterialAlertDialogBuilder(requireContext())
-                    .setMessage("메일 앱이 없습니다. support@songdosamgyeop.com 으로 보내주세요.")
-                    .setPositiveButton("확인", null)
-                    .show()
-            }
-        }
-
         // 로그아웃 버튼
         b.btnLogout.setOnClickListener {
             MaterialAlertDialogBuilder(requireContext())

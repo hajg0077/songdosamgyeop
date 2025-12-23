@@ -1,18 +1,77 @@
-import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import * as express from "express";
+import express, { Request, Response } from "express";
+
+import { admin, auth, db } from "./firebase";
 import { sendToTopic } from "./fcm";
 import { InicisClient, parseNoti } from "./pg/inicis";
 
-admin.initializeApp();
-const db = admin.firestore();
-const auth = admin.auth();
-
+export { makeUserHQ } from "./admin/makeUserHQ";
 // ──────────────────────────────────────────────────────────────
 // Config
 // ──────────────────────────────────────────────────────────────
+const app = express();
+app.use(express.urlencoded({ extended: true }));
+
 const region = "asia-northeast3";
 const HQ_TOPIC = process.env.HQ_TOPIC || "hq";
+
+app.post("/inicis/noti", async (req: Request, res: Response) => {
+  try {
+    const { ok, tid, orderId, amount } = parseNoti(req.body);
+    if (!orderId || !tid) return res.status(200).send("INVALID");
+
+    const ref = db.collection("orders").doc(orderId);
+    const snap = await ref.get();
+
+    if (!snap.exists) {
+      console.warn("inicis noti for unknown order", orderId, tid);
+      return res.status(200).send("OK");
+    }
+
+    if (ok) {
+      await ref.update({
+        paymentGateway: "INICIS",
+        paymentTid: tid,
+        paymentStatus: "PAID",
+        paidAt: admin.firestore.FieldValue.serverTimestamp(),
+        paymentMessage: "notiURL 승인",
+      });
+
+      const order = snap.data()!;
+      const branchName = String(order.branchName || "-");
+      const branchId = String(order.branchId || "");
+      const finalAmt = Number(order.totalAmount ?? amount ?? 0);
+
+      await sendToTopic(
+        HQ_TOPIC,
+        "결제 승인",
+        `${branchName} · 주문 ${orderId} · ${finalAmt.toLocaleString("ko-KR")}원`,
+        {
+          type: "PAYMENT_APPROVED",
+          orderId,
+          branchId,
+          paymentStatus: "PAID",
+          eventId: `paid:${orderId}:${tid}`,
+        }
+      );
+    } else {
+      await ref.update({
+        paymentGateway: "INICIS",
+        paymentTid: tid,
+        paymentStatus: "FAILED",
+        paymentMessage: `notiURL status=${req.body?.P_STATUS ?? "?"}`,
+      });
+    }
+
+    return res.status(200).send("OK");
+  } catch (e) {
+    console.error(e);
+    return res.status(200).send("ERR");
+  }
+});
+
+export const inicisWebhook = functions.region(region).https.onRequest(app);
+
 const BOOTSTRAP_SECRET = (functions.config().bootstrap?.secret || "") as string;
 const BRANCH_TOPIC = (branchId: string) => `branch-${branchId}`;
 
@@ -189,6 +248,27 @@ export const hqApproveRegistration = functions.region(region).https.onCall(async
     eventId: `reg-approved:${user.uid}:${Date.now()}`
   });
 
+    // 🔔 지사 개인 알림 추가
+    const tokenSnap = await db.collection("userTokens").doc(user.uid).get();
+
+    if (tokenSnap.exists) {
+      const token = tokenSnap.data()!.token;
+
+      await admin.messaging().send({
+        token,
+        notification: {
+          title: "지사 가입 승인 완료",
+          body: "본사에서 가입을 승인했습니다. 이제 로그인할 수 있어요."
+        },
+        data: {
+          type: "REGISTRATION_APPROVED",
+          branchId,
+          eventId: `reg-approved-user:${user.uid}:${Date.now()}`
+        }
+      });
+    }
+
+
   return { message: "approved", uid: user.uid, branchId };
 });
 
@@ -217,6 +297,24 @@ export const hqRejectRegistration = functions.region(region).https.onCall(async 
     uid: docId,
     eventId: `reg-rejected:${docId}:${Date.now()}`
   });
+
+    const tokenSnap = await db.collection("userTokens").doc(docId).get();
+
+    if (tokenSnap.exists) {
+      const token = tokenSnap.data()!.token;
+
+      await admin.messaging().send({
+        token,
+        notification: {
+          title: "지사 가입 반려",
+          body: reason || "본사에서 가입이 반려되었습니다."
+        },
+        data: {
+          type: "REGISTRATION_REJECTED",
+          eventId: `reg-rejected-user:${docId}:${Date.now()}`
+        }
+      });
+    }
 
   return { message: "rejected" };
 });
@@ -355,65 +453,6 @@ export const verifyInicisPayment = functions.region(region).https.onCall(async (
 
   return { ok, status: vr.status, amount: vr.amount ?? null, tid };
 });
-
-// ──────────────────────────────────────────────────────────────
-// ④ 이니시스 notiURL(Webhook) — x-www-form-urlencoded
-//    성공 처리 시 "OK" 그대로 응답(재전송 중지)
-// ──────────────────────────────────────────────────────────────
-const app = express();
-app.use(express.urlencoded({ extended: true }));
-
-app.post("/inicis/noti", async (req, res) => {
-  try {
-    // (권장) 이니시스 발신 IP 화이트리스트 검증 로직 추가 가능
-    const { ok, tid, orderId, amount } = parseNoti(req.body);
-    if (!orderId || !tid) return res.status(200).send("INVALID"); // 재시도 유도
-
-    const ref = db.collection("orders").doc(orderId);
-    const snap = await ref.get();
-    if (!snap.exists) {
-      console.warn("inicis noti for unknown order", orderId, tid);
-      return res.status(200).send("OK"); // 재전송 방지
-    }
-
-    if (ok) {
-      await ref.update({
-        paymentGateway: "INICIS",
-        paymentTid: tid,
-        paymentStatus: "PAID",
-        paidAt: admin.firestore.FieldValue.serverTimestamp(),
-        paymentMessage: "notiURL 승인"
-      });
-
-      const order = snap.data()!;
-      const branchName = String(order.branchName || "-");
-      const branchId = String(order.branchId || "");
-      const finalAmt = Number(order.totalAmount ?? amount ?? 0);
-
-      await sendToTopic(HQ_TOPIC, "결제 승인", `${branchName} · 주문 ${orderId} · ${finalAmt.toLocaleString("ko-KR")}원`, {
-        type: "PAYMENT_APPROVED",
-        orderId,
-        branchId,
-        paymentStatus: "PAID",
-        eventId: `paid:${orderId}:${tid}`
-      });
-    } else {
-      await ref.update({
-        paymentGateway: "INICIS",
-        paymentTid: tid,
-        paymentStatus: "FAILED",
-        paymentMessage: `notiURL status=${req.body?.P_STATUS ?? "?"}`
-      });
-    }
-
-    return res.status(200).send("OK"); // 반드시 "OK"
-  } catch (e) {
-    console.error(e);
-    return res.status(200).send("ERR"); // 재시도 유도
-  }
-});
-
-export const inicisWebhook = functions.region(region).https.onRequest(app);
 
 // ──────────────────────────────────────────────────────────────
 // ⑤ 신규 가입 신청 트리거: HQ 알림 + 장치 락(멱등)
