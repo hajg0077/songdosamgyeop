@@ -31,8 +31,10 @@ class HqActivity : AppCompatActivity(R.layout.activity_hq) {
 
         val bottom = findViewById<BottomNavigationView>(R.id.bottomNav)
         bottom.setupWithNavController(navController)
-        bottom.setOnItemReselectedListener { /* no-op */ }
 
+        bottom.setOnItemReselectedListener { item ->
+            navController.popBackStack(item.itemId, false)
+        }
         navController.addOnDestinationChangedListener { _, destination, _ ->
             bottom.isVisible = destination.id in setOf(
                 R.id.menu_hq_home,

@@ -19,7 +19,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Songdo"
-        android:forceDarkAllowed="false">
+        android:forceDarkAllowed="false"
+        android:enableOnBackInvokedCallback="true" >
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"

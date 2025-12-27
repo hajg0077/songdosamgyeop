@@ -68,7 +68,8 @@ class HqRegistrationDetailFragment
                             b.tvName.text = d.name
                             b.tvEmail.text = d.email
                             b.tvPhone.text = d.phone ?: "-"
-                            findNavController().popBackStack()
+
+                            b.groupButtons.visibility = View.GONE
                         }
                         HqRegistrationDetailViewModel.UiState.NotFound -> {
                             Snackbar.make(b.root, "신청서를 찾을 수 없습니다.", Snackbar.LENGTH_LONG)
@@ -77,7 +78,7 @@ class HqRegistrationDetailFragment
                             findNavController().popBackStack()
                         }
                         is HqRegistrationDetailViewModel.UiState.Error -> {
-                            Snackbar.make(b.scroll, state.message, Snackbar.LENGTH_LONG)
+                            Snackbar.make(b.root, state.message, Snackbar.LENGTH_LONG)
                                 .setAnchorView(b.groupButtons)   // ✅ 스낵바가 버튼 위에 뜨고 버튼은 안 밀림
                                 .show()
                         }
@@ -106,8 +107,12 @@ class HqRegistrationDetailFragment
         // 처리 결과
         actionsVm.message.observe(viewLifecycleOwner) { res ->
             setButtonsEnabled(b, true)
-            res.onSuccess { b.root.showInfo(it) }
-                .onFailure { b.root.showError(it) }
+            res.onSuccess {
+                b.root.showInfo(it)
+                findNavController().popBackStack()
+            }.onFailure {
+                b.root.showError(it)
+            }
             requireActivity().invalidateOptionsMenu()
         }
     }

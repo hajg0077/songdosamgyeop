@@ -23,6 +23,7 @@ import com.google.android.material.tabs.TabLayout
 import com.google.firebase.Timestamp
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.databinding.FragmentHqOrdersBinding
+import com.songdosamgyeop.order.ui.common.NavKeys
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.OutputStreamWriter
 import java.text.NumberFormat
@@ -40,7 +41,7 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
 
     companion object {
         private const val KEY_ORDER_UPDATED = "KEY_ORDER_UPDATED"
-        private const val KEY_INIT_FILTER   = "KEY_INIT_FILTER"
+        private const val KEY_ORDERS_FILTER_STATUS = "KEY_ORDERS_FILTER_STATUS"
     }
 
     private val vm: HqOrdersViewModel by viewModels()
@@ -57,6 +58,18 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         b = FragmentHqOrdersBinding.bind(view)
+        val currentHandle  = findNavController().currentBackStackEntry?.savedStateHandle
+
+        currentHandle?.getLiveData<String>(KEY_ORDERS_FILTER_STATUS)
+            ?.observe(viewLifecycleOwner) { statusStr ->
+                val s = statusStr ?: return@observe
+
+                // ✅ 여기서 VM에 필터 적용 (네 VM 함수명에 맞게)
+                vm.setSingleStatusFilter(s)   // <- 너 프로젝트에 맞게 바꿔줘
+
+                // ✅ 1회 적용 후 제거 (중복 적용/재진입 방지)
+                currentHandle.remove<String>(KEY_ORDERS_FILTER_STATUS)
+            }
 
         // RecyclerView
         adapter = HqOrdersAdapter { orderId ->
@@ -166,30 +179,12 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
         }
 
         // 상세→목록 변경 신호 수신 → 재조회
-        val handle = findNavController().currentBackStackEntry?.savedStateHandle
-        handle?.getLiveData<Boolean>(KEY_ORDER_UPDATED)
+        currentHandle?.getLiveData<Boolean>(KEY_ORDER_UPDATED)
             ?.observe(viewLifecycleOwner) { changed ->
                 if (changed == true) {
                     refreshList()                   // ✅ refresh 대체
-                    handle.remove<Boolean>(KEY_ORDER_UPDATED)
+                    currentHandle.remove<Boolean>(KEY_ORDER_UPDATED)
                 }
-            }
-
-        // 홈→초기 필터(탭/상태/기간 등) 수신
-        val fromHome = findNavController().previousBackStackEntry?.savedStateHandle
-        fromHome?.getLiveData<Bundle>(KEY_INIT_FILTER)
-            // ✅ 람다 파라미터 타입 지정 (추론 에러 방지)
-            ?.observe(viewLifecycleOwner) { payload: Bundle ->
-                if (payload.getString("screen") == "orders") {
-                    payload.getString("tab")?.let(vm::setTab)
-                    payload.getString("branchQuery")?.let(vm::setBranchQuery) // ✅ 이름 수정
-                    @Suppress("DEPRECATION")
-                    vm.setDateRange(
-                        payload.getParcelable("dateStart"),
-                        payload.getParcelable("dateEnd")
-                    )
-                }
-                fromHome.remove<Bundle>(KEY_INIT_FILTER)
             }
 
         // 당겨서 새로고침
@@ -197,6 +192,21 @@ class HqOrdersFragment : Fragment(R.layout.fragment_hq_orders) {
             refreshList()                           // ✅ refresh 대체
             b.swipe.isRefreshing = false
         }
+
+        val fromHome = findNavController().previousBackStackEntry?.savedStateHandle
+        fromHome?.getLiveData<Bundle>(NavKeys.INIT_FILTER)
+            ?.observe(viewLifecycleOwner) { payload: Bundle ->
+                if (payload.getString("screen") == "orders") {
+
+                    // 🔹 상태 필터 (PENDING / APPROVED 등)
+                    payload.getString("status")?.let { status ->
+                        vm.setSingleStatusFilter(status)
+                    }
+                }
+
+                // ✅ 반드시 제거 (재진입/뒤로가기 중복 방지)
+                fromHome.remove<Bundle>(NavKeys.INIT_FILTER)
+            }
     }
 
     /** 현재 필터값을 그대로 다시 적용하여 재조회 트리거 */

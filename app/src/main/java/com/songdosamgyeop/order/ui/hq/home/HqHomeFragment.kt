@@ -7,8 +7,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.songdosamgyeop.order.R
 import com.songdosamgyeop.order.databinding.FragmentHqHomeBinding
+import com.songdosamgyeop.order.ui.common.NavKeys
 import com.songdosamgyeop.order.ui.hq.orders.HqOrdersViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -17,13 +19,7 @@ import java.util.Locale
 
 @AndroidEntryPoint
 class HqHomeFragment : Fragment(R.layout.fragment_hq_home) {
-
     private val vm: HqHomeViewModel by viewModels()
-
-    companion object {
-        /** 홈 → 목적지(모니터링/신청서)로 초기 필터를 전달하는 키 */
-        private const val KEY_INIT_FILTER = "KEY_INIT_FILTER"
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val b = FragmentHqHomeBinding.bind(view)
@@ -75,30 +71,38 @@ class HqHomeFragment : Fragment(R.layout.fragment_hq_home) {
         // - R.id.nav_registrations : 신청서 목록(HqRegistrationListFragment)
 
         b.cardTodayOrders.setOnClickListener {
-            // 홈 → 모니터링 탭으로 이동하면서 필터 조건(PENDING) 전달
             findNavController().currentBackStackEntry?.savedStateHandle?.set(
-                "KEY_INIT_FILTER",
+                NavKeys.INIT_FILTER,
                 bundleOf("screen" to "orders", "status" to "PENDING")
             )
-            findNavController().navigate(R.id.menu_monitoring)
+
+            // ✅ 탭 이동은 navigate() 말고 bottomNav 선택으로
+            requireActivity()
+                .findViewById<BottomNavigationView>(R.id.bottomNav)
+                .selectedItemId = R.id.menu_monitoring
         }
 
         b.cardActiveOrders.setOnClickListener {
-            // 모니터링을 APPROVED (출고 대기)로 열기 예시
-            sendInitFilterAndNavigate(
-                screen = "orders",
-                status = "APPROVED",
-                destId = R.id.menu_monitoring
+            findNavController().currentBackStackEntry?.savedStateHandle?.set(
+                NavKeys.INIT_FILTER,
+                bundleOf("screen" to "orders", "status" to "PENDING")
             )
+
+            // ✅ 탭 이동은 navigate() 말고 bottomNav 선택으로
+            requireActivity()
+                .findViewById<BottomNavigationView>(R.id.bottomNav)
+                .selectedItemId = R.id.menu_monitoring
         }
 
         b.cardPendingRegs.setOnClickListener {
-            // 신청서 탭을 PENDING 필터로 열기
-            sendInitFilterAndNavigate(
-                screen = "registrations",
-                status = "PENDING",
-                destId = R.id.menu_registrations
+            findNavController().currentBackStackEntry?.savedStateHandle?.set(
+                NavKeys.INIT_FILTER,
+                bundleOf("screen" to "registrations", "status" to "PENDING")
             )
+
+            requireActivity()
+                .findViewById<BottomNavigationView>(R.id.bottomNav)
+                .selectedItemId = R.id.menu_registrations
         }
 
         // 진입 시 데이터 로드
@@ -111,17 +115,16 @@ class HqHomeFragment : Fragment(R.layout.fragment_hq_home) {
         progress.visibility = if (loading) View.VISIBLE else View.GONE
     }
 
-    /**
-     * 홈 → 목적지로 초기 필터 신호를 보낸 뒤 이동
-     * SavedStateHandle 경로:
-     *  - currentBackStackEntry.savedStateHandle.set(KEY_INIT_FILTER, Bundle)
-     *  - 목적지 프래그먼트에서 previousBackStackEntry.savedStateHandle.getLiveData(...)로 수신
-     */
-    private fun sendInitFilterAndNavigate(screen: String, status: String, destId: Int) {
+    private fun openRegistrations(status: String) {
+        findNavController().currentBackStackEntry?.savedStateHandle?.set(NavKeys.REG_STATUS, status)
+        findNavController().navigate(R.id.menu_registrations)
+    }
+
+    private fun openMonitoringWithStatus(status: String) {
         findNavController().currentBackStackEntry?.savedStateHandle?.set(
-            KEY_INIT_FILTER,
-            bundleOf("screen" to screen, "status" to status)
+            NavKeys.ORDERS_FILTER_STATUS,
+            status
         )
-        findNavController().navigate(destId)
+        findNavController().navigate(R.id.menu_monitoring)
     }
 }

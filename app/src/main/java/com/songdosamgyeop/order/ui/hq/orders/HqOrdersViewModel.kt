@@ -28,6 +28,10 @@ class HqOrdersViewModel @Inject constructor(
     private val _branchQuery = MutableLiveData(savedStateHandle.get<String>("branchQuery") ?: "")
     val branchQuery: LiveData<String> = _branchQuery
 
+    // ✅ 홈/화면에서 단일 상태로 좁히는 필터 (없으면 null)
+    private val _statusFilter = MutableLiveData<String?>(savedStateHandle.get<String>("statusFilter"))
+    val statusFilter: LiveData<String?> = _statusFilter
+
     private val _dateStart = MutableLiveData<Timestamp?>(savedStateHandle.get<Timestamp>("dateStart"))
     private val _dateEnd = MutableLiveData<Timestamp?>(savedStateHandle.get<Timestamp>("dateEnd"))
     val dateStart: LiveData<Timestamp?> = _dateStart
@@ -46,7 +50,7 @@ class HqOrdersViewModel @Inject constructor(
     private val progressing = listOf(OrderStatus.PENDING, OrderStatus.APPROVED, OrderStatus.REJECTED)
     private val completed = listOf(OrderStatus.SHIPPED, OrderStatus.DELIVERED)
 
-
+    private val _forcedStatus = MutableLiveData<OrderStatus?>(null)
     // 🔒 설정 제거: 하드코딩 기본값
     private val defaultTab = TAB_IN_PROGRESS
     private val includeRejectedInProgress = false
@@ -80,6 +84,7 @@ class HqOrdersViewModel @Inject constructor(
 
     fun setTab(newTab: String) {
         if (_tab.value == newTab) return
+        _forcedStatus.value = null
         Log.d(TAG, "setTab: $newTab")
         _tab.value = newTab
         resetAndLoad()
@@ -96,6 +101,11 @@ class HqOrdersViewModel @Inject constructor(
         resetAndLoad()
     }
 
+    fun setSingleStatusFilter(status: String) {
+        _forcedStatus.value = runCatching { OrderStatus.valueOf(status) }.getOrNull()
+        resetAndLoad()
+    }
+
     private fun resetAndLoad() {
         lastDoc = null
         isEndReached = false
@@ -107,7 +117,9 @@ class HqOrdersViewModel @Inject constructor(
         if (isLoading || isEndReached) return
         isLoading = true
 
-        val statuses = statusesForTab(_tab.value ?: TAB_IN_PROGRESS).map { it.name }
+        val statuses = _forcedStatus.value
+            ?.let { listOf(it.name) }
+            ?: statusesForTab(_tab.value ?: TAB_IN_PROGRESS).map { it.name }
 
         var q: Query = db.collection("orders")
             .whereIn("status", statuses)

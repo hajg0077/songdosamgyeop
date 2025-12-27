@@ -11,7 +11,6 @@ import androidx.core.os.bundleOf
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -28,16 +27,13 @@ import com.songdosamgyeop.order.ui.common.showInfo
 import android.content.DialogInterface
 import com.songdosamgyeop.order.data.repo.Registration as RepoRegistration  // ✅ alias 로 통일
 import android.graphics.drawable.ColorDrawable
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
-import androidx.navigation.NavController
 import androidx.recyclerview.widget.LinearLayoutManager
 
 @AndroidEntryPoint
 class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_list) {
     companion object {
         private const val KEY_INIT_FILTER = "KEY_INIT_FILTER"
+        private const val KEY_REG_STATUS = "HQ_REG_FILTER_STATUS"
     }
     private val vm: HqRegistrationListViewModel by viewModels()
     private val actionsVm: HqRegistrationActionsViewModel by viewModels()
@@ -49,6 +45,14 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
     private var lastAction: LastAction? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val handle = findNavController().currentBackStackEntry?.savedStateHandle
+
+        handle?.getLiveData<String>(KEY_REG_STATUS)
+            ?.observe(viewLifecycleOwner) { statusStr ->
+                val s = statusStr ?: return@observe
+                vm.setStatus(RegistrationStatus.valueOf(s))
+                handle.remove<String>(KEY_REG_STATUS)
+            }
         val b = FragmentHqRegistrationListBinding.bind(view)
 
         adapter = RegistrationAdapter { id, reg ->
@@ -62,9 +66,7 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
                 "phone" to reg.phone,
                 "memo" to reg.memo
             )
-            requireActivity()
-                .findNavController(R.id.hq_nav_host)
-                .navigate(R.id.hqRegistrationDetailFragment, args)
+            findNavController().navigate(R.id.hqRegistrationDetailFragment, args)
         }
         b.recycler.layoutManager = LinearLayoutManager(requireContext())
         b.recycler.adapter = adapter
@@ -169,19 +171,20 @@ class HqRegistrationListFragment : Fragment(R.layout.fragment_hq_registration_li
             SpacingItemDecoration(resources.getDimensionPixelSize(R.dimen.list_item_space))
         )
 
-        val nav: NavController = requireActivity().findNavController(R.id.hq_nav_host)
-
-        val fromHome = nav.previousBackStackEntry?.savedStateHandle
-        fromHome?.getLiveData<Bundle>(KEY_INIT_FILTER)
+        handle?.getLiveData<Bundle>(KEY_INIT_FILTER)
             ?.observe(viewLifecycleOwner) { payload ->
-                if (payload.getString("screen") == "registrations") {
-                    payload.getString("status")?.let { statusStr ->
+                val p = payload ?: return@observe
+
+                if (p.getString("screen") == "registrations") {
+                    p.getString("status")?.let { statusStr ->
                         vm.setStatus(RegistrationStatus.valueOf(statusStr))
                     }
                 }
-                // ✅ remove가 없을 수 있으니 null로 지워버리기
-                fromHome.set(KEY_INIT_FILTER, null)
+
+                handle.remove<Bundle>(KEY_INIT_FILTER)
             }
+
+
     }
 
     private fun removeFromList(docId: String) {
